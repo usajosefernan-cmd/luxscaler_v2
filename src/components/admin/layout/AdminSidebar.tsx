@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, Users, Megaphone, Server, Activity,
     FlaskConical, Store, Palette, LogOut, Settings,
-    ChevronRight, CreditCard, Layers, Database, ChevronLeft, PanelLeftClose, PanelLeftOpen, Zap
+    ChevronRight, CreditCard, Layers, Database, ChevronLeft, PanelLeftClose, PanelLeftOpen, Zap, Bot
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // Import Hook
 
-type TabView = 'RESUMEN' | 'USUARIOS' | 'MARKETING' | 'INFRAESTRUCTURA' | 'LISTA_ESPERA' | 'REGISTRO_DATOS' | 'CONFIG_VIVA' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | 'THEME_DESIGNER' | 'STRIPE' | 'GOD_MODE';
+type TabView = 'RESUMEN' | 'USUARIOS' | 'MARKETING' | 'INFRAESTRUCTURA' | 'LISTA_ESPERA' | 'REGISTRO_DATOS' | 'CONFIG_VIVA' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | 'THEME_DESIGNER' | 'STRIPE' | 'GOD_MODE' | 'LUXCANVAS';
 
 interface AdminSidebarProps {
     currentTab: TabView;
@@ -27,6 +27,7 @@ const MENU_STRUCTURE = [
 
     { id: 'LUXSCALER', icon: Layers, group: 'APPS', labelKey: 'sidebar.luxscaler_engine' },
     { id: 'LABORATORIO', icon: FlaskConical, group: 'APPS', labelKey: 'sidebar.forensic_lab' },
+    { id: 'LUXCANVAS', icon: Bot, group: 'APPS', labelKey: 'sidebar.luxcanvas' },
     { id: 'THEME_DESIGNER', icon: Palette, group: 'APPS', labelKey: 'sidebar.theme_designer' },
 
     { id: 'CONFIG_VIVA', icon: Settings, group: 'SYSTEM', labelKey: 'sidebar.viva_config' },

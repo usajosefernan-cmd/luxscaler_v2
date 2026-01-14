@@ -34,13 +34,13 @@ const INITIAL_MESSAGE: Message = {
   stats: { tokens: 45, latency: '12ms', model: 'Gemini-3-Pro' }
 };
 
-const App = () => {
+export const AdminLuxCanvas = () => {
   // --- STATE ---
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingLog, setThinkingLog] = useState<string[]>([]);
-  
+
   const [docState, setDocState] = useState<DocState>({
     title: 'Espec_Arquitectura_v1.md',
     content: INITIAL_DOC,
@@ -50,7 +50,7 @@ const App = () => {
   const [metrics, setMetrics] = useState({ cpu: 12, ram: 45, net: '1.2' });
 
   // --- EFFECTS ---
-  
+
   // Simulate system "life" metrics
   useEffect(() => {
     const interval = setInterval(() => {
@@ -122,10 +122,10 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#050505] text-slate-300 font-mono overflow-hidden selection:bg-cyan-900/50">
-      
+    <div className="flex h-full w-full bg-[#050505] text-slate-300 font-mono overflow-hidden selection:bg-cyan-900/50">
+
       {/* Left: Chat & Controls */}
-      <ChatPanel 
+      <ChatPanel
         messages={messages}
         inputValue={inputValue}
         setInputValue={setInputValue}
@@ -136,7 +136,7 @@ const App = () => {
       />
 
       {/* Right: Document Editor */}
-      <EditorPanel 
+      <EditorPanel
         docState={docState}
         setDocContent={(content) => setDocState(prev => ({ ...prev, content }))}
         setDocTitle={(title) => setDocState(prev => ({ ...prev, title }))}
@@ -147,4 +147,4 @@ const App = () => {
   );
 };
 
-export default App;
+// export default App;

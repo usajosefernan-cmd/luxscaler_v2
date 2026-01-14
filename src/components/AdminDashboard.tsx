@@ -17,6 +17,7 @@ import { AdminStripe } from './admin/AdminStripe'; // NEW IMPORT
 import { AdminGodMode } from './admin/AdminGodMode'; // GOD MODE IMPORT
 import { ProductShowcase, ShowcaseExample } from './ProductShowcase';
 import { AdminLayout } from './admin/layout/AdminLayout'; // NEW IMPORT
+import { AdminLuxCanvas } from './admin/luxcanvas/AdminLuxCanvas'; // LUX CANVAS IMPORT
 import { useTranslation } from 'react-i18next'; // IMPORT I18N
 import { getDisplayUrl, getMasterUrl, getThumbnailUrl } from '../utils/imageUtils';
 import { compressAndResizeImage, uploadImageToStorage, generatePreviewGrid, analyzeImage, generateMaster } from '../services/geminiService';
@@ -31,7 +32,7 @@ interface AdminDashboardProps {
     defaultShowcase?: boolean; // NEW: If true, starts in showcase mode
 }
 
-type TabView = 'RESUMEN' | 'USUARIOS' | 'MARKETING' | 'INFRAESTRUCTURA' | 'LISTA_ESPERA' | 'REGISTRO_DATOS' | 'CONFIG_VIVA' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | 'THEME_DESIGNER' | 'STRIPE' | 'GOD_MODE';
+type TabView = 'RESUMEN' | 'USUARIOS' | 'MARKETING' | 'INFRAESTRUCTURA' | 'LISTA_ESPERA' | 'REGISTRO_DATOS' | 'CONFIG_VIVA' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | 'THEME_DESIGNER' | 'STRIPE' | 'GOD_MODE' | 'LUXCANVAS';
 // TABS
 type Tab = 'REGISTRO_DATOS' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | 'THEME_DESIGNER';
 
@@ -1443,6 +1444,17 @@ FASE 4: REILUMINACIÓN VOLUMÉTRICA`);
                 {currentTab === 'STRIPE' && <AdminStripe />}
 
                 {/* --- TAB: GOD_MODE --- */}
+                {currentTab === 'LUXCANVAS' && (
+                    <div className="h-full w-full relative">
+                        <button
+                            onClick={() => setCurrentTab('RESUMEN')}
+                            className="absolute top-4 left-4 z-50 p-2 bg-black/50 text-white rounded-full hover:bg-white/20 transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <AdminLuxCanvas />
+                    </div>
+                )}
                 {currentTab === 'GOD_MODE' && <AdminGodMode />}
 
                 {/* --- TAB: LISTA_ESPERA REMOVED (Moved to AdminUserManagement) --- */}
