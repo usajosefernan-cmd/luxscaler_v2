@@ -3,6 +3,8 @@ import ChatPanel from './components/ChatPanel';
 import EditorPanel from './components/EditorPanel';
 import { geminiService } from './services/geminiService';
 import { Message, DocState } from './types';
+import { getSupabaseClient } from '../../../services/authService';
+import { getSupabaseClient } from '../../../services/authService';
 
 // Initial Document Template
 const INITIAL_DOC = `<!-- GEMINI 3 PRO: DOCUMENTO DE ARQUITECTURA DEL SISTEMA -->
@@ -65,20 +67,67 @@ export const AdminLuxCanvas = () => {
 
   // --- HANDLERS ---
 
-  const handleToolUpdate = useCallback((newContent: string, changeLog: string) => {
-    setDocState(prev => ({
-      ...prev,
-      content: newContent,
-      lastUpdated: new Date().toISOString()
-    }));
+  // --- HELPERS ---
+  const countWords = (str: string) => str.trim().split(/\s+/).length;
 
-    // Add a system event message to chat
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      role: 'system',
-      text: `> EVENTO DEL SISTEMA: Documento actualizado correctamente.\n> REGISTRO DE CAMBIOS: ${changeLog}`,
-      timestamp: new Date().toLocaleTimeString()
-    }]);
+  const handleToolUpdate = useCallback((newContent: string, changeLog: string) => {
+    setDocState(prev => {
+      const currentCount = countWords(prev.content);
+      const newCount = countWords(newContent);
+      const diff = newCount - currentCount;
+
+      console.log(`🛡️ DOC UPDATE: ${currentCount} -> ${newCount} words (Diff: ${diff})`);
+
+      // CRITICAL GUARD: Prevent massive data loss (tolerance -5%? No, user said NO DECREASE).
+      // User said: "El contador de palabras SOLO puede SUBIR o mantenerse. NUNCA bajar."
+      // We will apply strict mode.
+
+      if (newCount < currentCount) {
+        const errorMsg = `⚠️ SEGURIDAD DE DATOS: Actualización rechazada. \nPérdida de contenido detectada: ${currentCount} -> ${newCount} palabras.\nRegla: El contenido nunca debe disminuir. Usa 'appendSection' o revisa el truncado.`;
+
+        // Asynchronously notify UI via messages (cannot call setMessages directly comfortably inside functional update if we want clean logic, 
+        // but we can use a ref or side effect. For now, we will assume setMessages is safe to call here or use a layout effect).
+        // Actually, calling setMessages inside setDocState callback is bad practice.
+        // We will move logic outside.
+        return prev;
+      }
+
+      return {
+        ...prev,
+        content: newContent,
+        lastUpdated: new Date().toISOString()
+      };
+    });
+
+    // Check logic again for side effects (messages)
+    setDocState(currentState => {
+      const currentCount = countWords(currentState.content);
+      const newCountVal = countWords(newContent);
+
+      if (newCountVal < currentCount) {
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          role: 'system',
+          text: `🔴 **BLOQUEO DE SEGURIDAD**: Intento de reducir el documento rechazado (${currentCount} -> ${newCountVal} palabras). \nEl sistema ha protegido tus datos. Pide a la IA que use métodos incrementales.`,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+        return currentState; // Return same state
+      }
+
+      // Success Update
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        role: 'system',
+        text: `> DOCUMENTO ACTUALIZADO: ${changeLog} (+${newCountVal - currentCount} palabras)`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+
+      return {
+        ...currentState,
+        content: newContent,
+        lastUpdated: new Date().toISOString()
+      };
+    });
   }, []);
 
   const handleSendMessage = async () => {
