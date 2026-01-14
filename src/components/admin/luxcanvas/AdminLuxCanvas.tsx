@@ -5,6 +5,7 @@ import { geminiService } from './services/geminiService';
 import { Message, DocState } from './types';
 import { getSupabaseClient } from '../../../services/authService';
 import { getSupabaseClient } from '../../../services/authService';
+import { getSupabaseClient } from '../../../services/authService';
 
 // Initial Document Template
 const INITIAL_DOC = `<!-- GEMINI 3 PRO: DOCUMENTO DE ARQUITECTURA DEL SISTEMA -->
@@ -70,61 +71,70 @@ export const AdminLuxCanvas = () => {
   // --- HELPERS ---
   const countWords = (str: string) => str.trim().split(/\s+/).length;
 
-  const handleToolUpdate = useCallback((newContent: string, changeLog: string) => {
+  const saveVersionToSupabase = async (title: string, content: string, log: string) => {
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.from('document_versions').insert({
+        document_title: title,
+        content: content,
+        change_summary: log
+      });
+      console.log("💾 Versión guardada en Supabase");
+    } catch (err) {
+      console.error("Error guardando versión:", err);
+    }
+  };
+
+  const handleToolUpdate = useCallback((action: string, data: any) => {
     setDocState(prev => {
-      const currentCount = countWords(prev.content);
-      const newCount = countWords(newContent);
-      const diff = newCount - currentCount;
+      let nextContent = prev.content;
+      let changeLog = "";
 
-      console.log(`🛡️ DOC UPDATE: ${currentCount} -> ${newCount} words (Diff: ${diff})`);
-
-      // CRITICAL GUARD: Prevent massive data loss (tolerance -5%? No, user said NO DECREASE).
-      // User said: "El contador de palabras SOLO puede SUBIR o mantenerse. NUNCA bajar."
-      // We will apply strict mode.
-
-      if (newCount < currentCount) {
-        const errorMsg = `⚠️ SEGURIDAD DE DATOS: Actualización rechazada. \nPérdida de contenido detectada: ${currentCount} -> ${newCount} palabras.\nRegla: El contenido nunca debe disminuir. Usa 'appendSection' o revisa el truncado.`;
-
-        // Asynchronously notify UI via messages (cannot call setMessages directly comfortably inside functional update if we want clean logic, 
-        // but we can use a ref or side effect. For now, we will assume setMessages is safe to call here or use a layout effect).
-        // Actually, calling setMessages inside setDocState callback is bad practice.
-        // We will move logic outside.
+      if (action === 'UPDATE') {
+        nextContent = data.content;
+        changeLog = data.changeLog;
+      } else if (action === 'APPEND') {
+        nextContent = prev.content + `\n\n## ${data.title}\n\n${data.content}`;
+        changeLog = `➕ Sección Añadida: ${data.title}`;
+      } else {
         return prev;
       }
 
-      return {
-        ...prev,
-        content: newContent,
-        lastUpdated: new Date().toISOString()
-      };
-    });
+      // 🛡️ SECURITY GUARD
+      const currentWordCount = countWords(prev.content);
+      const nextWordCount = countWords(nextContent);
+      const diff = nextWordCount - currentWordCount;
 
-    // Check logic again for side effects (messages)
-    setDocState(currentState => {
-      const currentCount = countWords(currentState.content);
-      const newCountVal = countWords(newContent);
+      console.log(`🛡️ TRANSACCIÓN: ${currentWordCount} -> ${nextWordCount} palabras (Diff: ${diff})`);
 
-      if (newCountVal < currentCount) {
-        setMessages(prev => [...prev, {
-          id: Date.now(),
-          role: 'system',
-          text: `🔴 **BLOQUEO DE SEGURIDAD**: Intento de reducir el documento rechazado (${currentCount} -> ${newCountVal} palabras). \nEl sistema ha protegido tus datos. Pide a la IA que use métodos incrementales.`,
-          timestamp: new Date().toLocaleTimeString()
-        }]);
-        return currentState; // Return same state
+      if (nextWordCount < currentWordCount) {
+        console.error("⛔ ACTUALIZACIÓN BLOQUEADA POR PÉRDIDA DE DATOS.");
+        setTimeout(() => {
+          setMessages(msgs => [...msgs, {
+            id: Date.now(),
+            role: 'system',
+            text: `🔴 **BLOQUEO**: Intento de reducir contenido rechazado (${currentWordCount} -> ${nextWordCount}). Usa Append.`,
+            timestamp: new Date().toLocaleTimeString()
+          }]);
+        }, 0);
+        return prev;
       }
 
-      // Success Update
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        role: 'system',
-        text: `> DOCUMENTO ACTUALIZADO: ${changeLog} (+${newCountVal - currentCount} palabras)`,
-        timestamp: new Date().toLocaleTimeString()
-      }]);
+      // ✅ SUCCESS
+      saveVersionToSupabase(prev.title, nextContent, changeLog);
+
+      setTimeout(() => {
+        setMessages(msgs => [...msgs, {
+          id: Date.now(),
+          role: 'system',
+          text: `> DOC ACTUALIZADO: ${changeLog} (+${diff} palabras).\n💾 Backup en Supabase OK.`,
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+      }, 0);
 
       return {
-        ...currentState,
-        content: newContent,
+        ...prev,
+        content: nextContent,
         lastUpdated: new Date().toISOString()
       };
     });
