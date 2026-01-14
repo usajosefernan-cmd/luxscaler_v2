@@ -54,6 +54,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     const [showToc, setShowToc] = useState(true);
 
     // ... (Hooks remain same)
+    const sections = useMemo(() => parseMarkdownToSections(docState.content), [docState.content]);
+
+    const completionPercentage = useMemo(() => {
+        if (sections.length === 0) return 0;
+        const completed = sections.filter(s => s.status === 'complete').length;
+        return Math.round((completed / sections.length) * 100);
+    }, [sections]);
+
+    const handleScrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            element.classList.add('bg-blue-50', 'transition-colors', 'duration-700');
+            setTimeout(() => element.classList.remove('bg-blue-50'), 1500);
+        }
+    };
+
+    const StatusBadge = ({ status }: { status: string }) => {
+        switch (status) {
+            case 'complete': return <span className="flex items-center gap-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase"><CheckCircle2 size={10} /> Completado</span>;
+            case 'pending': return <span className="flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase"><Clock size={10} /> Pendiente</span>;
+            case 'comment': return <span className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase">Comentario</span>;
+            default: return null;
+        }
+    };
 
     return (
         <div className="flex-1 flex flex-col bg-[#f8f9fa] relative overflow-hidden h-full text-slate-800 font-sans">
