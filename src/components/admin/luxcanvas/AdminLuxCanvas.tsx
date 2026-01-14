@@ -51,11 +51,14 @@ export const AdminLuxCanvas = () => {
   const [appLink, setAppLink] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [historyVersions, setHistoryVersions] = useState<any[]>([]);
+  const [availableDocs, setAvailableDocs] = useState<string[]>([]);
+  const [showDocSelector, setShowDocSelector] = useState(false);
 
   // --- ACTIONS ---
   const handleSaveDocument = async () => {
     // Force Save
     await saveVersionToSupabase(docState.title, docState.content, '💾 Guardado Manual por Usuario');
+    await fetchDocuments(); // Refresh list to show new title if changed
 
     setMessages(prev => [...prev, {
       id: Date.now(),
@@ -65,17 +68,82 @@ export const AdminLuxCanvas = () => {
     }]);
   };
 
+  const fetchDocuments = async () => {
+    const supabase = getSupabaseClient();
+    // Hack allowing distinct titles on client side since distinct on column is tricky in simple query builder without raw SQL or Views
+    // We fetch last 50 versions to get recent active docs
+    const { data, error } = await supabase
+      .from('document_versions')
+      .select('document_title, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (data) {
+      // Extract unique titles
+      const titles = Array.from(new Set(data.map(d => d.document_title)));
+      setAvailableDocs(titles);
+    }
+  };
+
   const fetchHistory = async () => {
+    if (!docState.title) return;
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('document_versions')
       .select('id, created_at, word_count, change_summary, version_number')
+      .eq('document_title', docState.title) // FILTER BY CURRENT DOC
       .order('created_at', { ascending: false })
       .limit(20);
 
     if (data) setHistoryVersions(data);
     if (error) console.error("History error", error);
   };
+
+  const handleLoadDocument = async (title: string) => {
+    const supabase = getSupabaseClient();
+    // Fetch latest version content
+    const { data, error } = await supabase
+      .from('document_versions')
+      .select('content, change_summary')
+      .eq('document_title', title)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (data) {
+      setDocState({
+        title: title,
+        content: data.content,
+        lastUpdated: new Date().toISOString()
+      });
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        role: 'system',
+        text: `📂 Documento cargado: **${title}** (Último cambio: ${data.change_summary})`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      setShowDocSelector(false);
+    }
+  };
+
+  const handleNewDocument = () => {
+    setDocState({
+      title: 'Nuevo_Documento_v1.md',
+      content: INITIAL_DOC,
+      lastUpdated: new Date().toISOString()
+    });
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      role: 'system',
+      text: `📄 Nuevo documento inicializado.`,
+      timestamp: new Date().toLocaleTimeString()
+    }]);
+  };
+
+  // refresh docs on mount
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
   const handleShowHistory = () => {
     fetchHistory();
@@ -239,6 +307,11 @@ export const AdminLuxCanvas = () => {
         appLink={appLink}
         setAppLink={setAppLink}
         onShowHistory={handleShowHistory}
+        availableDocs={availableDocs}
+        onLoadDocument={handleLoadDocument}
+        onNewDocument={handleNewDocument}
+        showDocSelector={showDocSelector}
+        setShowDocSelector={setShowDocSelector}
       />
 
       {/* HISTORY MODAL (Simple Overlay) */}
