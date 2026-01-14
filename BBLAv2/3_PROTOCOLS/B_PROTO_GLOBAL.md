@@ -97,4 +97,48 @@ Todo en `snake_case`. Sin espacios.
 > "Un archivo mal nombrado es un archivo perdido."
 
 ---
-*Fin del Protocolo Global v2*
+> "Un archivo mal nombrado es un archivo perdido."
+
+---
+
+## 7. PROTOCOLO DE MIGRACIÓN SQL (REMOTO / NO-INTERACTIVO)
+
+> **PROBLEMA:** Supabase CLI pide password en `db push`. MCP falla sin token.
+> **SOLUCIÓN:** Usar **Edge Function Tunnel** (`migration-runner`).
+
+### 7.1 Flujo "One-Click Migration"
+
+1. **Preparar SQL**:
+    * Editar `supabase/functions/migration-runner/index.ts`.
+    * Pegar el SQL crudo dentro de la variable `COMPLETE_SEED_SQL`.
+    * *Nota: No usar delimiter `$$` en TS Strings.*
+
+2. **Desplegar Túnel (Deploy)**:
+
+    ```powershell
+    $env:SUPABASE_ACCESS_TOKEN="sbp_04adaab0d1790b65a2307f342826f4b51c16e466"
+    npx supabase functions deploy migration-runner --project-ref pjscnzymofaijevonxkm --no-verify-jwt
+    ```
+
+3. **Ejecutar Migración (Trigger)**:
+
+    ```powershell
+    # Invoca la función desde la red local
+    powershell -File scripts/trigger_migration.ps1
+    ```
+
+### 7.2 Credenciales Maestras (Hardcoded)
+
+* **Project Ref:** `pjscnzymofaijevonxkm`
+* **Supabase Access Token:** `sbp_04adaab0d1790b65a2307f342826f4b51c16e466`
+
+---
+
+## 8. INTEGRACIONES EXTERNAS (API KEYS)
+
+* **LaoZhang API (Sora/Images):**
+  * **Frontend (Vite):** `.env` -> `VITE_LAOZHANG_API_KEY`
+  * **Backend (Supabase Edge):** Dashboard -> Settings -> Secrets -> `LAOZHANG_API_KEY`
+
+---
+*Fin del Protocolo Global v2.1*
