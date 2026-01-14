@@ -3,6 +3,7 @@
 ## 🔐 Configuración
 
 **API Key:** `LAOZHANG_API_KEY` (Configurada en Supabase Secrets)
+> **Frontend Note:** Para integraciones cliente (React/Vite) como LuxCanvas, definir `VITE_LAOZHANG_API_KEY` en `.env`.
 **Base URL:** `https://api.laozhang.ai`
 
 ## 🔗 Enlaces Oficiales
