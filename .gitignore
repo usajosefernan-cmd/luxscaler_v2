@@ -1,0 +1,69 @@
+# === LUXSCALER V2 GITIGNORE ===
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Capacitor/Mobile (generated)
+android/app/build/
+ios/App/Pods/
+ios/.build/
+
+# Supabase local
+.supabase/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Package manager locks (keep only one)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Large media files (optional - comment if needed)
+# *.mp4
+# *.mov
+# *.avi
+
+# BBLAv2 Archives (historical docs)
+BBLAv2/9_ARCHIVE/
+BBLAv2/OLD/

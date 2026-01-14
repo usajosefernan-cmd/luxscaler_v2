@@ -1,0 +1,241 @@
+*********PROMPT
+
+[SYSTEM OVERRIDE: UNIVERSAL FORENSIC RE-SHOOT & OPTICAL SYNTHESIS PROTOCOL v14.0 - STRUCTURAL ALIGNMENT, DAMAGE RECONSTRUCTION & SOLID SIGNAL MASTER]. A definitive, photorealistic reconstruction of the scene from [TU_IMAGEN_DE_REFERENCIA]. The AI must act as a "Reality Reconstruction Engine," NOT just an editor.
+PHASE 1: DYNAMIC QUALITY ASSESSMENT & STRATEGY SWITCH (CRITICAL OVERRIDE):
+IF INPUT IS SHARP & CLEAN: Enhance and polish existing details using a 32-bit float pipeline.
+IF INPUT IS BLURRY, NOISY, LOW-RES, TREPIDATED, GEOMETRICALLY DISTORTED, OR HAS WEAK SIGNAL (FLAT/WASHED OUT):
+CRITICAL FOCUS & TREPIDATION OVERRIDE: If the input exhibits ANY camera shake (trepidation) or lack of definition, STOP being faithful to the pixels. The input is now considered a "corrupted compositional sketch" only.
+GEOMETRIC & OPTICAL FAILURE ALERT: If the input is tilted, has barrel distortion (curved lines), "fish-eye" effect, or perspective skew, ACTIVATE "RECTILINEAR CORRECTION MODE".
+SIGNAL INTEGRITY ALERT: If the histogram is compressed (grey blacks, dull whites), ACTIVATE "32-BIT NORMALIZATION PROTOCOL".
+IGNORE SOURCE ARTIFACTS: Do not sharpen the blur, noise, fog, distortion, or banding. DISCARD the bad data.
+COMPLETE RE-SYNTHESIS (GENERATIVE RE-INVENTION): You must HALLUCINATE and GENERATE brand new, razor-sharp high-frequency details (individual eyelashes, iris trabeculae, distinct teeth, skin pores, fabric weave, brick textures, architectural ornaments) from scratch.
+VIRTUAL RE-SHOOT: Simulate a brand new capture of the same scene using a 1/8000s shutter speed (zero motion blur), a high-end rectilinear lens (zero distortion), and a calibrated sensor.
+SEVERE DAMAGE RECONSTRUCTION (THE "TIME MACHINE" FIX):
+TOTAL DESTRUCTION RECOVERY: If the source image contains areas of total signal loss (white blobs, chemical burns, torn paper, missing chunks, severe mold), YOU MUST REIMAGINE THE MISSING CONTENT. Do not preserve the damage.
+CONTEXTUAL INFILLING: Infer what "should" be there based on the surrounding pixels. If a dress is covered in white spots, RECONSTRUCT the fabric texture, folds, and lace patterns seamlessly to match the visible parts. If a face is partially obscured, reconstruct the missing features (eyes, nose, mouth) based on anatomical symmetry and the visible remnants.
+HISTORICAL FIDELITY: Restore the image to how it looked the moment it was taken, before the damage occurred. Do not just blur the damage; PAINT NEW REALITY into the void.
+PHASE 2: INTELLIGENT SUBJECT RESTORATION (DISTANCE, GROUPS & TABLES):
+MULTI-SUBJECT COHERENCE: For group shots or subjects at medium distance, DO NOT treat faces as background texture. You MUST apply "Portrait-Level" attention to every single face in the frame.
+Prevent "Melted" Faces: Reconstruct anatomically perfect eyes (distinct iris/pupil), distinct noses, and separated teeth. NO SMUDGES.
+Depth of Field Correction: If the source has missed focus, FORCE the focus plane onto the subjects. Ensure they are "Dead Sharp".
+PHASE 3: FORENSIC COLOR, SIGNAL FOUNDATION & OPTICAL RECOVERY (THE "SOLID BASE" ENGINE):
+FORMAT & GEOMETRY INTEGRITY (THE "PERFECT MATCH" PROTOCOL):
+STRICT ASPECT RATIO & ALIGNMENT: The Output MUST match the Input Format and Aspect Ratio EXACTLY. The structural composition (position of eyes, subject boundaries, key landmarks) MUST ALIGN PERFECTLY with the source to facilitate a seamless "Before/After" slider comparison.
+CONDITIONAL GEOMETRIC CORRECTION: ONLY apply rotation or perspective correction if the image is objectively broken (crooked horizon > 2°, severe keystoning). If the geometry is stable, DO NOT CROP, DO NOT ZOOM, DO NOT SHIFT. Lock the canvas.
+LENS DISTORTION FIX (INTERNAL ONLY): Correct barrel/pincushion distortion inside the frame to flatter the subject (e.g., flattening a wide-angle nose), but keep the global frame edges aligned with the source.
+BIT DEPTH & COLOR SCIENCE (THE "CLEAN SIGNAL" FIX):
+CONTEXTUAL WHITE BALANCE: NEUTRALIZE technical color casts (sickly green fluorescent, muddy tungsten yellow, sepia age, chemical yellowing) but PRESERVE ATMOSPHERIC TONE. If the scene is a sunset (Golden Hour) or vintage candlelight, keep the warmth. If it's a night shot, keep the cool tones. Do not force a sterile 5500K white if it destroys the mood. Remove the "tint," keep the "temperature."
+32-BIT FLOAT PROCESSING: Treat the input as a 32-bit floating-point RAW file to ensure "infinite latitude". Prevent banding in gradients.
+AGGRESSIVE NORMALIZATION: STRETCH THE SIGNAL. The darkest pixel MUST touch True Black (0) and the brightest MUST touch True White (255). Redistribute midtones to ensure a "solid" base. No washed-out greys.
+SHADOW RECOVERY (ZONE 0-3 LIFT): Use the Ansel Adams Zone System. Do not just "brighten" shadows; REVEAL TEXTURE in Zone 0-3 (crushed blacks). Hallucinate the details hidden in the dark (fabric folds, corners) without washing out the black point.
+HIGHLIGHT ROLL-OFF (SOFT CLIP RECONSTRUCTION): For blown-out areas (windows, lights, flash), apply a "Soft Clip" curve. Do not cut to white abruptly. Invent a smooth transition and RE-GENERATE texture inside the bright areas.
+GAMMA CORRECTION: Force a 2.2 or Linear Gamma curve to ensure midtones retain weight and aren't washed out during exposure recovery.
+OPTICAL RECONSTRUCTION & ARTIFACT REMOVAL (THE "CLEAN GLASS" PROTOCOL):
+FORCE HORIZON & VERTICAL ALIGNMENT: If the photo is crooked, ROTATE and RE-ALIGN so gravity is vertical and horizons are perfectly horizontal.
+LENS SUBSTITUTION (WIDE-ANGLE FIX): If the scene suffers from wide-angle distortion (curved corners, big nose selfie), RE-RENDER THE SCENE as if shot with a 50mm or 85mm Prime Lens (Rectilinear Projection). Straighten architectural lines.
+GHOSTING & FLARE ELIMINATION: DETECT and ELIMINATE technical "ghosting" artifacts (floating green/blue blobs, internal lens reflections, sensor flare) typical of smartphone night photography.
+REMOVE: Floating orbs, green dots, blue "UFO" flares, double reflections of lights, haze halos around streetlights that look dirty or digital.
+KEEP: Artistic volumetric glow, anamorphic streaks (only if requested), and natural light dispersion.
+OPTICAL OBSTRUCTION CLEARANCE: Penetrate steam/haze and subtract milky overlays to restore the true black point hidden underneath.
+PHASE 4: STRUCTURAL INTEGRITY & FIDELITY:
+Compositional Lock: Keep the general pose and layout, but PRIORITIZE GEOMETRIC & SIGNAL CORRECTNESS over the original distorted/flat pixels.
+Identity Preservation: The people must look like themselves, but "in Ultra High Definition" with corrected proportions and perfect skin tones.
+OCR/Logo Protection: Reconstruct text and labels with perfect typographic sharpness.
+FRACTALITY & DETAIL:
+INJECT MASSIVE HIGH-FREQUENCY DETAIL. Hallucinate organic roughness (pores, vellus hair, fabric threads) to kill "plastic/mobile" look.
+OUTPUT SPECS: Native 4K, 8K UHD, Photorealistic RAW. Zero digital noise. Maximum Acutance. Perfect Geometry. Full Histogram Range (Solid Blacks, Clean Whites).
+Negative Prompt: damaged photo, torn photo, white spots, chemical burns, missing pixels, scratched, dirty, changing aspect ratio, cropping subject, shifting position, misaligned comparison, faithful to bad source, preserving blur, motion blur, camera shake, trepidation, melted faces, smudged faces, faceless people, distorted eyes, merged teeth, plastic skin, wax skin, neon red skin, sunburned, oversaturated, crushed shadows, blocked blacks, underexposed foreground, silhouetted buildings, dark blobs, flat lighting, noisy, grainy, jpeg artifacts, bad anatomy, floating limbs, double vision, ghosting, blurry table, blurry crowd, clipped highlights, solarized sky, foggy lens, steam patch, dirty lens, light leak, lens flare, washed out colors, milky overlay, low contrast haze, barrel distortion, curved walls, fish-eye effect, chromatic aberration, purple fringing, wide angle distortion, big nose distortion, tilted horizon, crooked lines, leaning buildings, distorted perspective, flat histogram, grey blacks, banding, posterization, floating green dots, blue sensor ghosts, internal lens reflection, unwanted halos, technical glare, dirty sensor spots, ugly artifacts, wrong white balance, sterile lighting.
+User
+falla en fotos subexpuestas, usa esto de ayuda par aclarar la parte correspondiente :
+[SUB-PROTOCOL: LOW-LIGHT RECOVERY & ATMOSPHERIC TONE MAPPING]
+DIAGNOSIS: If input is Underexposed/Dark: 1. ZONE SYSTEM RECOVERY: Do NOT wash out the image. Action: STRICTLY Anchor the Black Point at absolute zero (0,0,0). Aggressively lift Zones 1-3 (Deep Shadows) to reveal latent textures (fabric weave, brick details, foliage) that are currently hidden in darkness. Maintain rich, deep blacks where physically appropriate.
+2. CONCEPTUAL TONE MAPPING (HDR 2.0): Apply "Local Tone Mapping" to compress the dynamic range intelligently. Ensure visibility in dark areas without destroying the global contrast curve. Avoid the "halo effect" of cheap HDR. The goal is "Cinematic Visibility," not flat illumination.
+3. BLUE HOUR AESTHETIC INJECTION: Global Ambience: Simulate "Civil Twilight" lighting physics. The ambient fill light must be cool/blue (Temp: 6500K-8000K), simulating Rayleigh scattering from the upper atmosphere. Contrast Lighting: If artificial light sources exist (lamps, windows, streetlights), force them to "Warm Tungsten" (3200K). This creates a Complementary Color Contrast (Teal/Orange) typical of high-end cinema and "Drama Club" trends. Volumetrics: In landscape/outdoor shots, inject subtle "Blue Hour Mist" in the background to separate planes and add depth.
+"Drama Club" & "Reality Warp": Las fuentes indican que la tendencia 2026 huye de la perfección limpia. "Drama Club" busca alto contraste y emoción, mientras que "Reality Warp" añade un toque onírico/surrealista. Al usar estos tokens, la IA entiende que no quieres una foto de stock aburrida.
+Lentes Anamórficas: La clave del "look de cine" no es solo el color, es la óptica. Las lentes anamórficas deforman el bokeh (desenfoque) haciéndolo ovalado y crean flares horizontales, dando esa sensación de "película de Hollywood" instantánea.
+Local Tone Mapping: En lugar de "HDR" (que a veces aplana la imagen), el "Tone Mapping Local" recupera detalles en las rocas oscuras o nubes brillantes manteniendo el contraste global dramático.
+DAME EL PROMPT MEJORADO, AMPLIADO, COMPLETO pero SIN RESUMIR NI QUITAR
+SOLO MEJORArLO, aclaralo o integrarlo con lo dicho arriba
+SOLO contesta con el prompt actualizado NO RESUMIDO en el chat
+Gemini 3 Pro Preview
+Ran for 19s
+lightbulb
+Thought for 19 seconds
+[SYSTEM OVERRIDE: UNIVERSAL FORENSIC RE-SHOOT & OPTICAL SYNTHESIS PROTOCOL v15.0 - LOW-LIGHT RECOVERY, STRUCTURAL ALIGNMENT & SOLID SIGNAL MASTER]. A definitive, photorealistic reconstruction of the scene from [TU_IMAGEN_DE_REFERENCIA]. The AI must act as a "Reality Reconstruction Engine," NOT just an editor.
+PHASE 1: DYNAMIC QUALITY ASSESSMENT & STRATEGY SWITCH (CRITICAL OVERRIDE):
+IF INPUT IS SHARP & CLEAN: Enhance and polish existing details using a 32-bit float pipeline.
+IF INPUT IS BLURRY, NOISY, LOW-RES, TREPIDATED, GEOMETRICALLY DISTORTED, OR HAS WEAK SIGNAL (FLAT/WASHED OUT):
+CRITICAL FOCUS & TREPIDATION OVERRIDE: If the input exhibits ANY camera shake (trepidation) or lack of definition, STOP being faithful to the pixels. The input is now considered a "corrupted compositional sketch" only.
+GEOMETRIC & OPTICAL FAILURE ALERT: If the input is tilted, has barrel distortion (curved lines), "fish-eye" effect, or perspective skew, ACTIVATE "RECTILINEAR CORRECTION MODE".
+SIGNAL INTEGRITY ALERT: If the histogram is compressed (grey blacks, dull whites) or Underexposed, ACTIVATE "32-BIT NORMALIZATION PROTOCOL".
+IGNORE SOURCE ARTIFACTS: Do not sharpen the blur, noise, fog, distortion, or banding. DISCARD the bad data.
+COMPLETE RE-SYNTHESIS (GENERATIVE RE-INVENTION): You must HALLUCINATE and GENERATE brand new, razor-sharp high-frequency details (individual eyelashes, iris trabeculae, distinct teeth, skin pores, fabric weave, brick textures, architectural ornaments) from scratch.
+VIRTUAL RE-SHOOT: Simulate a brand new capture of the same scene using a 1/8000s shutter speed (zero motion blur), a high-end rectilinear lens (zero distortion), and a calibrated sensor.
+SEVERE DAMAGE RECONSTRUCTION (THE "TIME MACHINE" FIX):
+TOTAL DESTRUCTION RECOVERY: If the source image contains areas of total signal loss (white blobs, chemical burns, torn paper, missing chunks, severe mold), YOU MUST REIMAGINE THE MISSING CONTENT. Do not preserve the damage.
+CONTEXTUAL INFILLING: Infer what "should" be there based on the surrounding pixels. If a dress is covered in white spots, RECONSTRUCT the fabric texture, folds, and lace patterns seamlessly to match the visible parts. If a face is partially obscured, reconstruct the missing features (eyes, nose, mouth) based on anatomical symmetry and the visible remnants.
+HISTORICAL FIDELITY: Restore the image to how it looked the moment it was taken, before the damage occurred. Do not just blur the damage; PAINT NEW REALITY into the void.
+PHASE 2: INTELLIGENT SUBJECT RESTORATION (DISTANCE, GROUPS & TABLES):
+MULTI-SUBJECT COHERENCE: For group shots or subjects at medium distance, DO NOT treat faces as background texture. You MUST apply "Portrait-Level" attention to every single face in the frame.
+Prevent "Melted" Faces: Reconstruct anatomically perfect eyes (distinct iris/pupil), distinct noses, and separated teeth. NO SMUDGES.
+Depth of Field Correction: If the source has missed focus, FORCE the focus plane onto the subjects. Ensure they are "Dead Sharp".
+PHASE 3: FORENSIC COLOR, SIGNAL FOUNDATION & OPTICAL RECOVERY (THE "SOLID BASE" ENGINE):
+FORMAT & GEOMETRY INTEGRITY (THE "PERFECT MATCH" PROTOCOL):
+STRICT ASPECT RATIO & ALIGNMENT: The Output MUST match the Input Format and Aspect Ratio EXACTLY. The structural composition (position of eyes, subject boundaries, key landmarks) MUST ALIGN PERFECTLY with the source to facilitate a seamless "Before/After" slider comparison.
+CONDITIONAL GEOMETRIC CORRECTION: ONLY apply rotation or perspective correction if the image is objectively broken (crooked horizon > 2°, severe keystoning). If the geometry is stable, DO NOT CROP, DO NOT ZOOM, DO NOT SHIFT. Lock the canvas.
+LENS DISTORTION FIX (INTERNAL ONLY): Correct barrel/pincushion distortion inside the frame to flatter the subject (e.g., flattening a wide-angle nose), but keep the global frame edges aligned with the source.
+BIT DEPTH, COLOR SCIENCE & LOW-LIGHT RECOVERY (THE "CINEMATIC SIGNAL" FIX):
+SUB-PROTOCOL: LOW-LIGHT RECOVERY & ATMOSPHERIC TONE MAPPING:
+DIAGNOSIS: If the input is Underexposed/Dark, DO NOT wash out the image.
+ZONE SYSTEM RECOVERY: STRICTLY Anchor the Black Point at absolute zero (0,0,0). Aggressively lift Zones 1-3 (Deep Shadows) to reveal latent textures (fabric weave, brick details, foliage) that are currently hidden in darkness. Maintain rich, deep blacks where physically appropriate.
+CONCEPTUAL TONE MAPPING (HDR 2.0): Apply "Local Tone Mapping" to compress the dynamic range intelligently. Ensure visibility in dark areas without destroying the global contrast curve. Avoid the "halo effect" of cheap HDR. The goal is "Cinematic Visibility," fitting the "Drama Club" trend (high contrast, emotion).
+BLUE HOUR AESTHETIC INJECTION:
+Global Ambience: Simulate "Civil Twilight" lighting physics. The ambient fill light must be cool/blue (Temp: 6500K-8000K).
+Contrast Lighting: If artificial light sources exist (lamps, windows, streetlights), force them to "Warm Tungsten" (3200K). This creates a Complementary Color Contrast (Teal/Orange).
+Volumetrics: Inject subtle "Blue Hour Mist" in backgrounds to separate planes and add depth.
+CONTEXTUAL WHITE BALANCE: NEUTRALIZE technical color casts (sickly green fluorescent, muddy tungsten yellow) but PRESERVE ATMOSPHERIC TONE. Do not force a sterile 5500K white if it destroys the mood. Remove the "tint," keep the "temperature."
+32-BIT FLOAT PROCESSING: Treat the input as a 32-bit floating-point RAW file. Prevent banding.
+AGGRESSIVE NORMALIZATION: STRETCH THE SIGNAL. Darkest pixel -> True Black (0). Brightest pixel -> True White (255).
+HIGHLIGHT ROLL-OFF (SOFT CLIP RECONSTRUCTION): For blown-out areas, apply a "Soft Clip" curve. Invent a smooth transition and RE-GENERATE texture inside the bright areas.
+OPTICAL RECONSTRUCTION & ARTIFACT REMOVAL (THE "CLEAN GLASS" PROTOCOL):
+FORCE HORIZON & VERTICAL ALIGNMENT: If the photo is crooked, ROTATE and RE-ALIGN so gravity is vertical.
+LENS SUBSTITUTION (WIDE-ANGLE FIX): If the scene suffers from wide-angle distortion, RE-RENDER THE SCENE as if shot with a 50mm or 85mm Prime Lens (Rectilinear Projection).
+ANAMORPHIC OPTICS ("HOLLYWOOD LOOK"): To achieve the "Drama Club" and "Reality Warp" aesthetic, simulate Anamorphic Lens characteristics: create subtle oval bokeh and allow controlled horizontal flares if aesthetically appropriate, giving an instant cinematic feel.
+GHOSTING & FLARE ELIMINATION (SELECTIVE):
+REMOVE: Floating green/blue blobs, "UFO" flares, internal lens reflections, sensor dust spots.
+KEEP: Artistic volumetric glow and natural light dispersion (especially Anamorphic traits).
+OPTICAL OBSTRUCTION CLEARANCE: Penetrate steam/haze and subtract milky overlays to restore the true black point hidden underneath.
+PHASE 4: STRUCTURAL INTEGRITY & FIDELITY:
+Compositional Lock: Keep the general pose and layout, but PRIORITIZE GEOMETRIC & SIGNAL CORRECTNESS over the original distorted/flat pixels.
+Identity Preservation: The people must look like themselves, but "in Ultra High Definition" with corrected proportions and perfect skin tones.
+OCR/Logo Protection: Reconstruct text and labels with perfect typographic sharpness.
+FRACTALITY & DETAIL:
+INJECT MASSIVE HIGH-FREQUENCY DETAIL. Hallucinate organic roughness (pores, vellus hair, fabric threads) to kill "plastic/mobile" look.
+OUTPUT SPECS: Native 4K, 8K UHD, Photorealistic RAW. Zero digital noise. Maximum Acutance. Perfect Geometry. Full Histogram Range (Solid Blacks, Clean Whites).
+Negative Prompt: damaged photo, torn photo, white spots, chemical burns, missing pixels, scratched, dirty, changing aspect ratio, cropping subject, shifting position, misaligned comparison, faithful to bad source, preserving blur, motion blur, camera shake, trepidation, melted faces, smudged faces, faceless people, distorted eyes, merged teeth, plastic skin, wax skin, neon red skin, sunburned, oversaturated, crushed shadows, blocked blacks, underexposed foreground, silhouetted buildings, dark blobs, flat lighting, noisy, grainy, jpeg artifacts, bad anatomy, floating limbs, double vision, ghosting, blurry table, blurry crowd, clipped highlights, solarized sky, foggy lens, steam patch, dirty lens, light leak, unwanted lens flare, washed out colors, milky overlay, low contrast haze, barrel distortion, curved walls, fish-eye effect, chromatic aberration, purple fringing, wide angle distortion, big nose distortion, tilted horizon, crooked lines, leaning buildings, distorted perspective, flat histogram, grey blacks, banding, posterization, floating green dots, blue sensor ghosts, internal lens reflection, unwanted halos, technical glare, dirty sensor spots, ugly artifacts, wrong white balance, sterile lighting, HDR halos, washed out shadows.
+
+******COMO CONSTRUIR PROMPT SIMILAR POR TABLAS:
+
+Para llegar a ese Prompt v15.0 "Monolítico" usando la arquitectura modular Fase 1.5, no tendríamos una sola fila con todo el texto (eso sería hardcoding disfrazado).
+
+En su lugar, el sistema ensambla este prompt tomando piezas de las tablas photoscaler, lightscaler y stylescaler cuando los sliders están en valores extremos (ej. Acutancia 10, Sombras 9).
+
+Aquí tienes cómo se vería la base de datos para generar exactamente ese resultado.
+
+1. LA TABLA PRINCIPAL: photoscaler_prompt_rules
+Esta tabla aporta el esqueleto estructural, la geometría y la "alucinación" de detalles. Como el prompt v15 es muy agresivo ("Forensic Re-shoot"), esto corresponde a un valor de Acutancia 9-10.
+
+SQL
+
+/* SCENARIO: El usuario pone el slider de ACUTANCIA al máximo (9-10).
+   Esto activa el modo "Forensic Re-shoot".
+*/
+
+INSERT INTO photoscaler_prompt_rules 
+(
+  slider_name, 
+  slider_value_min, slider_value_max, 
+  intensity_level, 
+  on_off,
+  
+  -- EL CORAZÓN DEL PROMPT (Estructura y Definición)
+  base_prompt,
+  
+  -- DETALLES TÉCNICOS (Geometría y Óptica)
+  secondary_prompt,
+  
+  -- ALUCINACIÓN DE DETALLE (Reconstrucción)
+  tertiary_prompt
+)
+VALUES 
+(
+  'acutancia', 
+  9, 10, 
+  'extreme', 
+  true,
+
+  -- base_prompt: Define la misión principal (Phase 1 & 4)
+  '[SYSTEM OVERRIDE: UNIVERSAL FORENSIC RE-SHOOT & OPTICAL SYNTHESIS PROTOCOL v15.0]. 
+   A definitive, photorealistic reconstruction. The AI must act as a "Reality Reconstruction Engine". 
+   IF INPUT IS BLURRY OR NOISY: STOP being faithful to the pixels. The input is a "corrupted compositional sketch". 
+   VIRTUAL RE-SHOOT: Simulate a brand new capture using 1/8000s shutter speed and a calibrated sensor.',
+
+  -- secondary_prompt: Corrige la física de la lente (Phase 3)
+  'GEOMETRIC FAILURE ALERT: ACTIVATE "RECTILINEAR CORRECTION MODE". 
+   Straighten architectural lines. LENS SUBSTITUTION: If wide-angle distortion exists, RE-RENDER as if shot with 85mm Prime Lens. 
+   FORCE HORIZON ALIGNMENT. DISCARD source artifacts (blur, noise, fog).',
+
+  -- tertiary_prompt: Inyecta el detalle fino (The "Hallucination" list)
+  'COMPLETE RE-SYNTHESIS: GENERATE brand new, razor-sharp high-frequency details (individual eyelashes, iris trabeculae, skin pores, fabric weave). 
+   SEVERE DAMAGE RECONSTRUCTION: If areas have total signal loss, DO NOT preserve damage. PAINT NEW REALITY based on context.'
+);
+2. EL COMPLEMENTO DE LUZ: lightscaler_prompt_rules
+Tu prompt v15 tiene una sección enorme sobre "Low-Light Recovery", "Zone System" y "Blue Hour". En la Fase 1.5, esto NO iría en photoscaler, sino aquí. Se activaría cuando el análisis detecta subexposición o el usuario sube el slider de Sombras.
+
+SQL
+
+/* SCENARIO: Detectamos foto oscura o slider SOMBRAS alto (8-10).
+   Esto inyecta la lógica de "Zone System" y "Blue Hour".
+*/
+
+INSERT INTO lightscaler_prompt_rules 
+(
+  slider_name, slider_value_min, slider_value_max,
+  base_prompt,
+  secondary_prompt
+)
+VALUES 
+(
+  'sombras', 8, 10,
+
+  -- base_prompt: Recuperación de luz (Zone System)
+  '[SUB-PROTOCOL: LOW-LIGHT RECOVERY]. DIAGNOSIS: Underexposed. 
+   ZONE SYSTEM RECOVERY: Strictly anchor Black Point at (0,0,0) but Aggressively lift Zones 1-3 to reveal latent textures. 
+   32-BIT FLOAT PROCESSING: Stretch the signal. Prevent banding.',
+
+  -- secondary_prompt: Teoría del color (Blue Hour / Drama)
+  'BLUE HOUR AESTHETIC: Simulate "Civil Twilight" (6500K-8000K). 
+   CONTRAST LIGHTING: Force artificial lights to "Warm Tungsten" (3200K) for Teal/Orange contrast. 
+   OPTICAL OBSTRUCTION CLEARANCE: Penetrate haze/steam to restore true blacks.'
+);
+3. EL TOQUE FINAL: stylescaler_prompt_rules
+El prompt menciona "Anamorphic Optics", "Drama Club" y "Cinema Look". Esto pertenece al escalador de estilo.
+
+SQL
+
+
+
+INSERT INTO stylescaler_prompt_rules 
+(
+  slider_name, slider_value_min, slider_value_max,
+  base_prompt
+)
+VALUES 
+(
+  'detalle', 7, 10,
+  
+  -- base_prompt: Estética de Cine
+  'ANAMORPHIC OPTICS: Simulate oval bokeh and controlled horizontal flares for "Cinema Look". 
+   CONCEPTUAL TONE MAPPING (HDR 2.0): Ensure "Cinematic Visibility" fitting the "Drama Club" trend. 
+   Reject sterile lighting; prioritize emotion and atmosphere.'
+);
+4. CÓMO LLEGAMOS AL RESULTADO (El Ensamblaje)
+Para generar el texto final que me has pasado, el sqlPromptBuilder.ts hace esto en milisegundos:
+
+Recibe Estado: { acutancia: 10, sombras: 9, detalle: 8 }
+
+Query Paralela:
+
+SELECT * FROM photoscaler... WHERE val=10 → Trae el "System Override" y "Rectilinear".
+
+SELECT * FROM lightscaler... WHERE val=9 → Trae el "Zone System" y "Blue Hour".
+
+SELECT * FROM stylescaler... WHERE val=8 → Trae el "Anamorphic".
+
+Concatenación Inteligente: Une los strings en orden: [Photoscaler Base] + [Photoscaler Secondary] + [Lightscaler Base] + [Lightscaler Secondary] + [Style Base].
+
+Inyección Negativa: Añade el bloque final de Negative Prompt (que suele estar en una constante global o en una tabla system_config).
+
+Resultado: El prompt masivo que has subido.
+
+¿Por qué hacerlo así y no pegar el texto entero en una celda? Porque si mañana quieres cambiar la lógica de "Blue Hour" a "Golden Hour", solo tocas la tabla lightscaler. Si lo tuvieras todo junto en un bloque monolítico, tendrías que editar el bloque entero, arriesgándote a romper la lógica de geometría o definición. Divide y vencerás.
