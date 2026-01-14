@@ -2,43 +2,16 @@
 description: Sincroniza manualmente el código local con GitHub
 ---
 
-# Git Sync - Sincronización Manual con GitHub
+# Git Sync - Sincronización Rápida con GitHub
 
-Este workflow sube todos los cambios locales al repositorio GitHub.
+## Ejecución en Segundo Plano
 
-## Pasos
+// turbo
 
-// turbo-all
-
-1. Verificar estado de git:
+1. Sync instantáneo (background):
 
 ```powershell
-cd c:/Users/yo/Pictures/Descargaspc/antigravity/luxscaler_v2
-git status --short
-```
-
-1. Añadir todos los cambios:
-
-```powershell
-git add -A
-```
-
-1. Crear commit con timestamp:
-
-```powershell
-git commit -m "Sync: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-```
-
-1. Push a GitHub:
-
-```powershell
-git push origin main
-```
-
-1. Confirmar resultado:
-
-```powershell
-git log --oneline -1
+Start-Job -ScriptBlock { Set-Location 'c:/Users/yo/Pictures/Descargaspc/antigravity/luxscaler_v2'; git add -A; git commit -m "Sync $(Get-Date -Format 'HH:mm')"; git push origin main 2>&1 } | Out-Null; Write-Host "Sync en background..."
 ```
 
 ## Repositorio
