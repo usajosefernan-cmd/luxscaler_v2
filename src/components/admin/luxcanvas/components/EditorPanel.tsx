@@ -38,7 +38,344 @@ interface EditorPanelProps {
     onShowHistory: () => void;
 }
 
-// ... (Rest of code remains similar until Header)
+interface Section {
+    id: string;
+    title: string;
+    content: string;
+    level: number;
+    status: 'pending' | 'complete' | 'comment';
+}
+
+// --- DIAGRAM HELPERS ---
+const nodeWidth = 172;
+const nodeHeight = 36;
+
+const getLayoutedElements = (nodes: any[], edges: any[], direction = 'TB') => {
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+    const isHorizontal = direction === 'LR';
+    dagreGraph.setGraph({ rankdir: direction });
+
+    nodes.forEach((node) => {
+        dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    });
+
+    edges.forEach((edge) => {
+        dagreGraph.setEdge(edge.source, edge.target);
+    });
+
+    dagre.layout(dagreGraph);
+
+    nodes.forEach((node) => {
+        const nodeWithPosition = dagreGraph.node(node.id);
+        node.targetPosition = isHorizontal ? 'left' : 'top';
+        node.sourcePosition = isHorizontal ? 'right' : 'bottom';
+        node.position = {
+            x: nodeWithPosition.x - nodeWidth / 2,
+            y: nodeWithPosition.y - nodeHeight / 2,
+        };
+    });
+
+    return { nodes, edges };
+};
+
+// --- PARSERS ---
+const parseFlowChart = (code: string) => {
+    const lines = code.split('\n').filter(l => l.trim().length > 0);
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const nodeSet = new Set();
+
+    lines.forEach(line => {
+        if (line.includes('-->')) {
+            const [source, target] = line.split('-->').map(s => s.trim());
+            const sId = source.replace(/\s+/g, '_');
+            const tId = target.replace(/\s+/g, '_');
+
+            if (!nodeSet.has(sId)) {
+                nodes.push({ id: sId, data: { label: source }, position: { x: 0, y: 0 }, type: 'default' });
+                nodeSet.add(sId);
+            }
+            if (!nodeSet.has(tId)) {
+                nodes.push({ id: tId, data: { label: target }, position: { x: 0, y: 0 }, type: 'default' });
+                nodeSet.add(tId);
+            }
+            edges.push({ id: `e${sId}-${tId}`, source: sId, target: tId, markerEnd: { type: MarkerType.ArrowClosed } });
+        }
+    });
+
+    return getLayoutedElements(nodes, edges);
+};
+
+const parseMindMap = (code: string) => {
+    const lines = code.split('\n');
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    const stack: { level: number, id: string }[] = [];
+    let idCounter = 0;
+
+    lines.forEach(line => {
+        const trimmed = line.trimStart();
+        if (!trimmed.startsWith('-')) return;
+
+        const level = line.length - trimmed.length;
+        const label = trimmed.replace('- ', '');
+        const id = `node_${idCounter++}`;
+
+        nodes.push({
+            id,
+            data: { label },
+            position: { x: 0, y: 0 },
+            style: { border: '1px solid #777', padding: 10, borderRadius: 5 }
+        });
+
+        // Current parent is the last one in stack with level < current level
+        while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+            stack.pop();
+        }
+
+        if (stack.length > 0) {
+            const parent = stack[stack.length - 1];
+            edges.push({
+                id: `e${parent.id}-${id}`,
+                source: parent.id,
+                target: id,
+                type: 'smoothstep'
+            });
+        }
+
+        stack.push({ level, id });
+    });
+
+    return { nodes, edges: edges.map(e => ({ ...e, animated: true })) }; // Simple mindmap layout would need more logic or just dagre
+};
+
+
+// --- HELPERS MAIN ---
+const parseMarkdownToSections = (markdown: string): Section[] => {
+    const lines = markdown.split('\n');
+    const sections: Section[] = [];
+    let currentSection: Section | null = null;
+    let sectionIdCounter = 0;
+
+    lines.forEach(line => {
+        const h1Match = line.match(/^# (.*)/);
+        const h2Match = line.match(/^## (.*)/);
+        const h3Match = line.match(/^### (.*)/);
+
+        if (h1Match || h2Match || h3Match) {
+            if (currentSection) {
+                sections.push(currentSection);
+            }
+            const title = h1Match ? h1Match[1] : (h2Match ? h2Match[1] : h3Match![1]);
+            const level = h1Match ? 1 : (h2Match ? 2 : 3);
+            currentSection = {
+                id: `sec-${sectionIdCounter++}`,
+                title: title.trim(),
+                content: line + '\n',
+                level,
+                status: line.includes('[Pendiente]') ? 'pending' : 'complete'
+            };
+        } else {
+            if (currentSection) {
+                currentSection.content += line + '\n';
+                // Detect comments
+                if (line.trim().startsWith('[')) {
+                    currentSection.status = 'pending';
+                }
+            } else {
+                // Frontmatter or intro text
+                if (!sections.length && line.trim()) {
+                    currentSection = {
+                        id: `sec-intro`,
+                        title: "Introducción",
+                        content: line + '\n',
+                        level: 1,
+                        status: 'complete'
+                    };
+                }
+            }
+        }
+    });
+
+    if (currentSection) sections.push(currentSection);
+    return sections;
+};
+
+
+// --- RENDERERS ---
+
+const FlowRenderer = ({ code }: { code: string }) => {
+    const { nodes, edges } = useMemo(() => parseFlowChart(code), [code]);
+    const [nlpNodes, setNodes, onNodesChange] = useNodesState(nodes);
+    const [nlpEdges, setEdges, onEdgesChange] = useEdgesState(edges);
+
+    return (
+        <div className="h-64 border border-slate-200 rounded-lg bg-slate-50 my-4 shadow-inner overflow-hidden">
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                fitView
+                proOptions={{ hideAttribution: true }}
+            >
+                <Background gap={12} size={1} />
+                <Controls />
+            </ReactFlow>
+        </div>
+    );
+};
+
+const MindMapRenderer = ({ code }: { code: string }) => {
+    // Simplified implementation for mindmap using dagre for now as parser above uses it implicitly by node structure
+    // Just reuse simple layout or improve parser. Using dagre layout for list items as hierarchical tree.
+    const { nodes, edges } = useMemo(() => {
+        const result = parseMindMap(code);
+        return getLayoutedElements(result.nodes, result.edges, 'LR');
+    }, [code]);
+
+    return (
+        <div className="h-96 border border-slate-200 rounded-lg bg-white my-4 shadow-sm overflow-hidden">
+            <div className="absolute top-2 left-2 z-10 bg-slate-100 px-2 py-1 rounded text-[10px] text-slate-500 font-bold uppercase">Mind Map</div>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                fitView
+                proOptions={{ hideAttribution: true }}
+            >
+                <Background color="#f1f5f9" gap={20} />
+                <Controls />
+            </ReactFlow>
+        </div>
+    )
+}
+
+const TableRenderer = ({ markdownTable }: { markdownTable: string }) => {
+    const rows = markdownTable.trim().split('\n').map(row =>
+        row.split('|').filter((_, i, arr) => i !== 0 && i !== arr.length - 1).map(cell => cell.trim())
+    );
+    const headers = rows[0];
+    const data = rows.slice(2); // Skip separator row
+
+    return (
+        <div className="overflow-x-auto my-4 rounded-lg border border-slate-200">
+            <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500 font-bold">
+                    <tr>
+                        {headers.map((h, i) => <th key={i} className="px-4 py-3">{h}</th>)}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {data.map((row, i) => (
+                        <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            {row.map((cell, j) => <td key={j} className="px-4 py-3 border-r border-slate-50 last:border-none">{cell}</td>)}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+// --- INFOGRAPHICS ---
+const InfographicGenerator = ({ sectionTitle }: { sectionTitle: string }) => {
+    const [generating, setGenerating] = useState(false);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+    const handleGenerate = async () => {
+        setGenerating(true);
+        try {
+            // Mock generation or call service
+            const url = await geminiService.generateInfographic(sectionTitle);
+            if (url && !url.startsWith('http')) {
+                // If it's pure base64/error handle it, but assuming service returns url or we use placeholder
+                console.log("Infographic generation prompt sent.");
+            }
+            // For Demo purposes if service not fully hooked
+            // setImageUrl("https://source.unsplash.com/random/800x600?tech"); 
+            if (url) setImageUrl(url);
+
+        } catch (e) {
+            console.error("Gen failed", e);
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    return (
+        <div className="my-4">
+            {!imageUrl ? (
+                <button
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="flex items-center gap-2 text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-2 rounded-lg transition-colors w-full justify-center border border-violet-200 border-dashed"
+                >
+                    <Wand2 size={14} className={generating ? "animate-spin" : ""} />
+                    {generating ? "Diseñando Infografía..." : "Generar Infografía IA"}
+                </button>
+            ) : (
+                <div className="relative group rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all">
+                    <img src={imageUrl} alt="Generated Infographic" className="w-full h-64 object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                        <button className="text-white hover:text-blue-200"><Eye size={24} /></button>
+                        <button onClick={() => setImageUrl(null)} className="text-white hover:text-red-200"><Clock size={24} /></button>
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded">Generado por Sora</div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+
+const SectionContentRenderer = ({ content }: { content: string }) => {
+    // Detect code blocks
+    const parts = content.split(/(```[\s\S]*?```)/g);
+
+    return (
+        <div className="text-slate-600 leading-relaxed space-y-4">
+            {parts.map((part, idx) => {
+                if (part.startsWith('```')) {
+                    const clean = part.replace(/```(flow|mindmap|json)?\n?/, '').replace(/```$/, '');
+                    if (part.includes('```flow')) {
+                        return <FlowRenderer key={idx} code={clean} />;
+                    } else if (part.includes('```mindmap')) {
+                        return <MindMapRenderer key={idx} code={clean} />;
+                    } else if (part.includes('|---')) { // Simple table detection logic
+                        return <TableRenderer key={idx} markdownTable={clean} />;
+                    }
+                    else {
+                        return (
+                            <pre key={idx} className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono overflow-x-auto shadow-inner">
+                                {clean}
+                            </pre>
+                        );
+                    }
+                }
+                // Text rendering (supports simple newlines or MD subset)
+                return part.split('\n').map((line, lIdx) => {
+                    if (!line.trim()) return <br key={lIdx} />;
+                    if (line.startsWith('#')) return null; // Headers handled by parent
+                    if (line.startsWith('- ')) return <li key={lIdx} className="ml-4 list-disc marker:text-blue-400">{line.replace('- ', '')}</li>;
+                    if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                        return <div key={lIdx} className="bg-amber-50 text-amber-700 px-3 py-2 rounded border-l-2 border-amber-400 text-xs italic my-2 flex gap-2"><AlertCircle size={14} /> {line}</div>;
+                    }
+                    // Bold support
+                    const parts = line.split(/(\*\*.*?\*\*)/);
+                    return <p key={lIdx} className="min-h-[10px]">
+                        {parts.map((p, pIdx) => {
+                            if (p.startsWith('**')) return <strong key={pIdx} className="text-slate-800 font-bold">{p.replace(/\*\*/g, '')}</strong>;
+                            return p;
+                        })}
+                    </p>;
+                });
+            })}
+        </div>
+    );
+};
+
 
 const EditorPanel: React.FC<EditorPanelProps> = ({
     docState,
@@ -53,7 +390,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     const [viewMode, setViewMode] = useState<'visual' | 'source'>('visual');
     const [showToc, setShowToc] = useState(true);
 
-    // ... (Hooks remain same)
     const sections = useMemo(() => parseMarkdownToSections(docState.content), [docState.content]);
 
     const completionPercentage = useMemo(() => {
