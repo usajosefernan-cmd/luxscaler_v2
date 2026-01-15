@@ -22,8 +22,8 @@ Este workflow implementa el "Workflow de Memoria" definido en el Protocolo Unive
     ```markdown
     ### 📝 SESIÓN: [YYYY-MM-DD HH:MM]
     **Agente:** [Nombre]
-    **Logros:** [Bullets claros]
-    **Cambios Técnicos:** [Rutas, Archivos, APIs]
+    **Logros:** [Explica QUÉ se logró y POR QUÉ es importante. No uses bullets simples, elabora el contexto.]
+    **Cambios Técnicos:** [Lista detallada: ARCHIVO MODIFICADO -> QUÉ CAMBIÓ EXACTAMENTE. Incluye nombres de funciones o tablas afectadas.]
     **Next:** [Siguiente paso lógico]
     ```
 
