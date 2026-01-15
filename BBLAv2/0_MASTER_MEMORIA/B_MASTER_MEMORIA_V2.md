@@ -132,6 +132,5 @@ La estructura se ha aplanado para facilitar el mantenimiento:
 
 **Next Steps:**
 
-* Verificar Netlify deploy con GitHub Actions.
 * Testing completo de CRUD en AdminGodMode.
 * Documentar flujo de edges y cascade checks.
