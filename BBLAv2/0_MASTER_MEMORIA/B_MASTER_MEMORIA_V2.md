@@ -134,3 +134,23 @@ La estructura se ha aplanado para facilitar el mantenimiento:
 
 * Testing completo de CRUD en AdminGodMode.
 * Documentar flujo de edges y cascade checks.
+
+### 📝 SESIÓN: 2026-01-15 14:10
+
+**Agente:** Antigravity
+**Logros:**
+
+* **Recuperación de Método de Migración Legacy:** Ante fallos persistentes en el despliegue de Edge Functions (`migration-runner`), se identificó y recuperó el script `scripts/run_sql_file.ps1`. Se validó que este método funciona inyectando SQL directamente a la Management API de Supabase, esquivando la inestabilidad del CLI.
+* **Ejecución Manual de SQL Phase 6:** Debido a que el script de PowerShell se colgaba por manejo de inputs, se extrajo la lógica y se ejecutó un `Invoke-RestMethod` directo en la terminal, logrando crear exitosamente las tablas `projects` y `documents`.
+* **Validación de Integridad:** Se actualizó el script `scripts/verify_migration.ps1` para buscar específicamente las tablas de la Fase 6 (`projects`, `documents`, `document_versions`). La validación confirmó la existencia de las 3 tablas críticas.
+* **Mejora del Protocolo de Sync:** Se actualizó `.agent/workflows/sync.md` para exigir explicaciones detalladas en futuras memorias, asegurando que el conocimiento técnico no se pierda en bullets simples.
+
+**Cambios Técnicos:**
+
+* **[NEW] `migration_phase6.sql`:** Archivo SQL conteniendo todo el DDL necesario para la Fase 6 (Proyectos, Documentos, RLS Policies). Usado como payload para la inyección API.
+* **[MOD] `.agent/workflows/sync.md`:** Se reescribió la sección de "Formato de Entrada" para solicitar explicaciones contextuales ("QUÉ y POR QUÉ") en lugar de listas simples.
+* **[MOD] `scripts/verify_migration.ps1`:** Se cambió la query SQL interna para buscar las tablas de la Fase 6 en `information_schema`, en lugar de las tablas de la Fase 2 antiguas.
+* **[DEL] `supabase/functions/migration-runner/deno.json`:** Se eliminó este archivo intentando depurar el fallo de despliegue (sin éxito, pero queda documentado como intento).
+
+**Next:** Continuar con la **Fase 6.3 (GitHub Sync)**. Integrar el botón "PUSH" en la UI y conectar con la Edge Function `lux-git-sync` (que deberá ser desplegada/verificada).
+
