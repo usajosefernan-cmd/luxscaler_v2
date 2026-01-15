@@ -7,7 +7,7 @@ $ProjectRef = "pjscnzymofaijevonxkm"
 Write-Host ">>> VERIFYING DATABASE STATE <<<" -ForegroundColor Cyan
 
 # QUERY: Check for the 7 new tables
-$Query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('photoscaler_prompt_rules', 'lightscaler_prompt_rules', 'stylescaler_prompt_rules', 'global_prompt_config', 'semantic_material_rules', 'vision_trigger_overrides', 'prompt_audit_log');"
+$Query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('projects', 'documents', 'document_versions');"
 
 $Url = "https://api.supabase.com/v1/projects/$ProjectRef/database/query"
 $Headers = @{
@@ -33,11 +33,11 @@ try {
         $Tables | ForEach-Object { Write-Host " - $($_.table_name)" }
         
         $Count = $Tables.Count
-        if ($Count -eq 7) {
-            Write-Host "`n🎉 SUCCESS: All 7 Master Tables are present!" -ForegroundColor Green
+        if ($Count -eq 3) {
+            Write-Host "`n🎉 SUCCESS: All 3 Phase 6 Tables are present!" -ForegroundColor Green
         }
         else {
-            Write-Host "`n⚠️ WARNING: Found $Count/7 tables. Migration may be incomplete." -ForegroundColor Yellow
+            Write-Host "`n⚠️ WARNING: Found $Count/3 tables. Migration may be incomplete." -ForegroundColor Yellow
         }
     }
     
