@@ -1,5 +1,3 @@
-
-
 ---
 
 ### 🏛️ TABLA 7: `prompt_audit_log` (INFRAESTRUCTURA COMPLETA)

@@ -46,4 +46,5 @@ pm run dev** desde luxscaler_v2.
 
 - ** terminal tienes persmisos para ejecutar teminal no me pidas hacerlo a mi
 
-5. PROHIBIDO RESUMIR
+### PROHIBIDO RESUMIR
+### Leer B_PROTO_GLOBAL.md
