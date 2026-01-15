@@ -22,7 +22,8 @@ import {
     AlertCircle,
     Image as ImageIcon,
     Wand2,
-    Share2
+    Share2,
+    Github
 } from 'lucide-react';
 import { DocState } from '../types';
 import { geminiService } from '../services/geminiService';
@@ -395,6 +396,10 @@ interface EditorPanelProps {
     onNewDocument: () => void;
     showDocSelector: boolean;
     setShowDocSelector: (show: boolean) => void;
+
+    // GitHub Integration
+    onPushToGithub?: () => void;
+    hasGithubRepo?: boolean;
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = ({
@@ -410,7 +415,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     onLoadDocument,
     onNewDocument,
     showDocSelector,
-    setShowDocSelector
+    setShowDocSelector,
+    onPushToGithub,
+    hasGithubRepo
 }) => {
     const [viewMode, setViewMode] = useState<'visual' | 'source'>('visual');
     const [showToc, setShowToc] = useState(true);
@@ -525,6 +532,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                             <Edit3 size={14} /> Código
                         </button>
                     </div>
+                    {hasGithubRepo && (
+                        <button
+                            onClick={onPushToGithub}
+                            className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg transition-all active:scale-95 border border-slate-700"
+                            title="Push to GitHub"
+                        >
+                            <Github size={14} /> PUSH
+                        </button>
+                    )}
                     <button
                         onClick={onSave}
                         className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-md shadow-blue-500/20 transition-all active:scale-95"
