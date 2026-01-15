@@ -35,8 +35,12 @@ const INITIAL_MESSAGE: Message = {
   stats: { tokens: 45, latency: '12ms', model: 'Gemini-3-Pro' }
 };
 
+import { ProjectLibrary } from './components/ProjectLibrary';
+import { Grid } from 'lucide-react';
+
 export const AdminLuxCanvas = () => {
   // --- STATE ---
+  const [activeView, setActiveView] = useState<'library' | 'editor'>('library');
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -48,6 +52,8 @@ export const AdminLuxCanvas = () => {
     lastUpdated: new Date().toISOString()
   });
 
+  const [currentDocId, setCurrentDocId] = useState<string | null>(null);
+
   const [appLink, setAppLink] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [historyVersions, setHistoryVersions] = useState<any[]>([]);
@@ -55,6 +61,12 @@ export const AdminLuxCanvas = () => {
   const [showDocSelector, setShowDocSelector] = useState(false);
 
   // --- ACTIONS ---
+  const handleOpenDocumentFromLibrary = async (docId: string, title: string) => {
+    setCurrentDocId(docId);
+    await handleLoadDocument(title); // Reuse existing load logic for content
+    setActiveView('editor');
+  };
+
   const handleSaveDocument = async () => {
     // Force Save
     await saveVersionToSupabase(docState.title, docState.content, '💾 Guardado Manual por Usuario');
@@ -180,7 +192,8 @@ export const AdminLuxCanvas = () => {
       await supabase.from('document_versions').insert({
         document_title: title,
         content: content,
-        change_summary: log
+        change_summary: log,
+        document_id: currentDocId
       });
       console.log("💾 Versión guardada en Supabase");
     } catch (err) {
@@ -241,7 +254,7 @@ export const AdminLuxCanvas = () => {
         lastUpdated: new Date().toISOString()
       };
     });
-  }, []);
+  }, [currentDocId]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isTyping) return;
@@ -283,8 +296,27 @@ export const AdminLuxCanvas = () => {
     }
   };
 
+  /**
+   * RENDER LOGIC
+   * We swap between ProjectLibrary and Editor
+   */
+  if (activeView === 'library') {
+    return <ProjectLibrary onOpenDocument={handleOpenDocumentFromLibrary} />;
+  }
+
   return (
     <div className="flex h-full w-full bg-[#050505] text-slate-300 font-mono overflow-hidden selection:bg-cyan-900/50 relative">
+
+      {/* BACK TO PROJECTS BUTTON */}
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => setActiveView('library')}
+          className="bg-black/80 hover:bg-blue-900/80 text-white p-2 rounded-lg border border-slate-700 hover:border-blue-500 transition-all shadow-xl backdrop-blur-md"
+          title="Volver a Proyectos"
+        >
+          <LayoutGrid size={20} />
+        </button>
+      </div>
 
       {/* Left: Chat & Controls */}
       <ChatPanel

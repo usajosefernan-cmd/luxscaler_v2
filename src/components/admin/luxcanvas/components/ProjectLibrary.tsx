@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../../../services/authService';
-import { Folder, FileText, Plus, Github, Search, ArrowRight, LayoutGrid, List as ListIcon, Clock, ChevronRight } from 'lucide-react';
+import { Folder, FileText, Plus, Github, Search, ArrowRight, Grid, List as ListIcon, Clock, ChevronRight } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -116,7 +116,7 @@ export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument }
                 <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 shadow-sm">
                     <div className="flex items-center gap-4">
                         <div className="bg-blue-600 p-2 rounded-lg">
-                            <LayoutGrid size={20} className="text-white" />
+                            <Grid size={20} className="text-white" />
                         </div>
                         <div>
                             <h1 className="text-lg font-bold text-slate-800">Biblioteca de Proyectos</h1>
