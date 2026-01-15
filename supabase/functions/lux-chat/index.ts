@@ -1,68 +1,19 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SYSTEM_INSTRUCTION_TEMPLATE = `
-Eres Gemini 3 Pro (LUX MODE), Arquitecto de Software Senior y Guardián de Datos.
+// Types for Raw API
+interface ChatMessage {
+    role: string;
+    parts: { text: string }[];
+}
 
-🚨 **DIRECTIVA DE SEGURIDAD DE DATOS (NIVEL CRÍTICO):**
-1. **PROHIBIDO BORRAR:** El contador de palabras NUNCA debe bajar.
-   - Si reescribes el documento y se corta por límite de tokens, PERDEREMOS DATOS.
-   - **SOLUCIÓN:** Para documentos grandes (+2000 palabras), USA 'appendSection' en lugar de 'updateDocument'.
-   - Si debes editar, hazlo incrementalmente.
-
-2. **DOCUMENTACIÓN SUPABASE EXHAUSTIVA:**
-   - El documento debe ser la **FUENTE DE VERDAD TOTAL**.
-   - Incluye schemas SQL completos (CREATE TABLE...), Policies RLS, Triggers, Functions.
-   - NO pongas "TBD" ni referencias externas. Escribe el CÓDIGO real.
-   - Incluye configuración de Storage optimizada.
-
-3. **VERSIONADO:**
-   - Diseña e implementa (en el doc) un sistema de versionado DB (tabla document_versions).
-
-🛠️ **HERRAMIENTAS:**
-- \`updateDocument\`: SOLO para pequeñas ediciones o docs nuevos.
-- \`appendSection\`: PREFERIDO. Añade contenido al final sin riesgo de borrar lo anterior.
-
-**TU OBJETIVO:** Construir la Biblioteca Técnica Suprema de LuxScaler sin perder ni un byte de historia.
-`;
-
-const tools = [
-    {
-        functionDeclarations: [
-            {
-                name: 'updateDocument',
-                description: '⚠️ SOLO para documentos cortos. Sobreescribe TODO el documento.',
-                parameters: {
-                    type: "OBJECT",
-                    properties: {
-                        content: { type: "STRING", description: 'Contenido completo.' },
-                        changeLog: { type: "STRING", description: 'Resumen cambios.' },
-                    },
-                    required: ['content', 'changeLog'],
-                },
-            },
-            {
-                name: 'appendSection',
-                description: 'Añade una nueva sección al final del documento. SEGURO para documentos largos.',
-                parameters: {
-                    type: "OBJECT",
-                    properties: {
-                        title: { type: "STRING", description: 'Título de la nueva sección (Markdown H2/H3)' },
-                        content: { type: "STRING", description: 'Contenido de la sección' },
-                    },
-                    required: ['title', 'content']
-                }
-            }
-        ]
-    }
-];
-
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
+    // 1. CORS Preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
@@ -70,53 +21,120 @@ serve(async (req) => {
     try {
         const { message, docContext, history } = await req.json();
 
-        // Use GEMINI_API_KEY from Secrets (BBLA Standard)
-        const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("LAOZHANG_API_KEY");
+        // 2. Secret Management
+        const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("LAOZHANG_API_KEY"); // Fallback
         if (!apiKey) throw new Error("Missing GEMINI_API_KEY in Secrets");
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-pro", // Or gemini-2.0-flash-exp if available in this SDK version
-            tools: tools
-        });
-
-        // Prepare Chat History
-        // History format from Frontend: { role: 'user' | 'ai', text: string }
-        // Gemini SDK format: { role: 'user' | 'model', parts: [{ text: string }] }
-        const chatHistory = (history || []).map((msg: any) => ({
+        // 3. Construct Payload manually (REST API v1beta)
+        const chatHistory: ChatMessage[] = (history || []).map((msg: any) => ({
             role: msg.role === 'ai' || msg.role === 'model' ? 'model' : 'user',
             parts: [{ text: msg.text }]
         }));
 
-        // Inject System Instruction + Doc Context
+        // System Instruction & Context
         const wordCount = docContext?.match(/\S+/g)?.length || 0;
-        const systemPrompt = `${SYSTEM_INSTRUCTION_TEMPLATE}\n\n[DOC CONTEXT]\nLongitud Actual: ${wordCount} palabras.\n\n${docContext}\n[END CONTEXT]`;
+        const systemInstruction = {
+            role: "user",
+            parts: [{
+                text: `SYSTEM: Eres Gemini 3 Pro (LUX MODE). 
+DIRECTIVA: NO BORRAR CONTENIDO. Usa 'appendSection' para textos largos.
+Si usas 'updateDocument', asegúrate de devolver EL TEXTO COMPLETO.
 
-        // We instantiate the chat with system prompt as the first history part (hack for some SDK versions) 
-        // OR rely on systemInstruction if supported.
-        // GoogleGenerativeAI SDK v0.1.3+ supports systemInstruction in model config.
-        const chat = model.startChat({
-            history: chatHistory,
-            systemInstruction: { role: 'system', parts: [{ text: systemPrompt }] }
-        });
+[DOC CONTEXT - ${wordCount} words]
+${docContext}
+[END CONTEXT]`
+            }]
+        };
 
-        const result = await chat.sendMessage(message);
-        const response = await result.response;
+        // Current User Message
+        const userMessage = {
+            role: "user",
+            parts: [{ text: message }]
+        };
 
-        // Parse Tool Calls
-        const functionCalls = response.functionCalls();
-        const text = response.text();
+        // Combine for "Chat" emulation (Gemini REST stateless/context window)
+        // Note: For 'generateContent', we pass contents array.
+        // We inject system prompt as the first message or use system_instruction if model supports it (v1beta does).
+        // For simplicity and compatibility with all models, we prepend to contents.
+        const contents = [systemInstruction, ...chatHistory, userMessage];
+
+        // Tools Definition (Raw JSON Schema)
+        const tools = [
+            {
+                function_declarations: [
+                    {
+                        name: "updateDocument",
+                        description: "Full overwrite of document. Only for small edits.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                content: { type: "STRING", description: "Full new content" },
+                                changeLog: { type: "STRING", description: "Summary of changes" }
+                            },
+                            required: ["content", "changeLog"]
+                        }
+                    },
+                    {
+                        name: "appendSection",
+                        description: "Append new section at end. Safe for large docs.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                title: { type: "STRING", description: "Section Title" },
+                                content: { type: "STRING", description: "Section Content" }
+                            },
+                            required: ["title", "content"]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        console.log("[LuxChat] Sending Request to Gemini REST API...");
+
+        // 4. Trace Call
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: contents,
+                    tools: tools
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+
+        // 5. Parse Response for Tools vs Text
+        let text = "";
+        const functionCalls: any[] = [];
+
+        for (const part of parts) {
+            if (part.text) text += part.text;
+            if (part.functionCall) {
+                functionCalls.push({
+                    name: part.functionCall.name,
+                    args: part.functionCall.args
+                });
+            }
+        }
 
         return new Response(
-            JSON.stringify({
-                text: text,
-                functionCalls: functionCalls
-            }),
+            JSON.stringify({ text, functionCalls }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
 
-    } catch (error) {
-        console.error("LuxChat Error:", error);
+    } catch (error: any) {
+        console.error("[LuxChat] Fatal Error:", error);
         return new Response(
             JSON.stringify({ error: error.message }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
