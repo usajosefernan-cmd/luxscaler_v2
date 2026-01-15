@@ -3,38 +3,72 @@ import postgres from "https://deno.land/x/postgresjs@v3.4.5/mod.js";
 
 // SQL with escaped quotes (no $$ delimiters) for TypeScript compatibility
 const COMPLETE_SEED_SQL = `
--- TABLA DE VERSIONADO LUXCANVAS
-CREATE TABLE IF NOT EXISTS public.document_versions (
+-- LUXCANVAS PHASE 6: PROJECTS & DOCUMENT ARCHITECTURE
+-- 1. PROJECTS TABLE
+CREATE TABLE IF NOT EXISTS public.projects (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    document_title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    change_summary TEXT,
-    
-    word_count INT GENERATED ALWAYS AS (array_length(regexp_split_to_array(content, '\\s+'), 1)) STORED,
-    file_size_bytes INT GENERATED ALWAYS AS (octet_length(content)) STORED,
-    version_number SERIAL, 
-
-    created_at TIMESTAMPTZ DEFAULT now(),
-    created_by UUID REFERENCES auth.users(id),
-    
-    CONSTRAINT word_count_check CHECK (word_count > 0)
+    name TEXT NOT NULL,
+    description TEXT,
+    github_repo_url TEXT,
+    github_branch TEXT DEFAULT 'main',
+    owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_document_versions_title_created ON public.document_versions(document_title, created_at DESC);
-
-ALTER TABLE public.document_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 DO $$ 
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all versions') THEN
-        CREATE POLICY "Admins can view all versions" ON public.document_versions FOR SELECT TO authenticated USING ( true );
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can insert versions') THEN
-        CREATE POLICY "Admins can insert versions" ON public.document_versions FOR INSERT TO authenticated WITH CHECK ( true );
-    END IF;
+    DROP POLICY IF EXISTS "Users can view own projects" ON public.projects;
+    DROP POLICY IF EXISTS "Users can insert own projects" ON public.projects;
+    DROP POLICY IF EXISTS "Users can update own projects" ON public.projects;
+    DROP POLICY IF EXISTS "Users can delete own projects" ON public.projects;
+    
+    CREATE POLICY "Users can view own projects" ON public.projects FOR SELECT USING (auth.uid() = owner_id);
+    CREATE POLICY "Users can insert own projects" ON public.projects FOR INSERT WITH CHECK (auth.uid() = owner_id);
+    CREATE POLICY "Users can update own projects" ON public.projects FOR UPDATE USING (auth.uid() = owner_id);
+    CREATE POLICY "Users can delete own projects" ON public.projects FOR DELETE USING (auth.uid() = owner_id);
 END $$;
 
-COMMENT ON TABLE public.document_versions IS 'Historial inmutable de versiones de documentos técnicos generados por LuxCanvas.';
+-- 2. DOCUMENTS TABLE
+CREATE TABLE IF NOT EXISTS public.documents (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    current_content TEXT,
+    status TEXT DEFAULT 'draft',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    last_edited_by UUID REFERENCES auth.users(id)
+);
+
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Users can view docs of own projects" ON public.documents;
+    DROP POLICY IF EXISTS "Users can insert docs to own projects" ON public.documents;
+    DROP POLICY IF EXISTS "Users can update docs of own projects" ON public.documents;
+
+    CREATE POLICY "Users can view docs of own projects" ON public.documents 
+        FOR SELECT USING (EXISTS (SELECT 1 FROM public.projects WHERE id = public.documents.project_id AND owner_id = auth.uid()));
+
+    CREATE POLICY "Users can insert docs to own projects" ON public.documents 
+        FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM public.projects WHERE id = public.documents.project_id AND owner_id = auth.uid()));
+
+    CREATE POLICY "Users can update docs of own projects" ON public.documents 
+        FOR UPDATE USING (EXISTS (SELECT 1 FROM public.projects WHERE id = public.documents.project_id AND owner_id = auth.uid()));
+END $$;
+
+-- 3. LINK VERSIONS TO DOCUMENTS
+ALTER TABLE public.document_versions 
+ADD COLUMN IF NOT EXISTS document_id UUID REFERENCES public.documents(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_documents_project_id ON public.documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_versions_document_id ON public.document_versions(document_id);
+
+COMMENT ON TABLE public.projects IS 'Contenedor principal de LuxCanvas (Repositorios/Proyectos)';
 `;
 
 serve(async (req: Request) => {
