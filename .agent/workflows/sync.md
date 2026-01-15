@@ -8,6 +8,8 @@ Este workflow implementa el "Workflow de Memoria" definido en el Protocolo Unive
 
 ## Pasos
 
+// turbo-all
+
 1. **Lectura de Estado (Read-First)**
     - Lee `BBLAv2/0_MASTER_MEMORIA/B_MASTER_MEMORIA_V2.md`.
     - Entiende el contexto actual y la última entrada de sesión.
@@ -31,7 +33,12 @@ Este workflow implementa el "Workflow de Memoria" definido en el Protocolo Unive
     - Si generaste algún reporte temporal en `BBLAv2` o raíz, MUÉVELO a `BBLAv2/9_ARCHIVE`.
     - La carpeta `BBLAv2` debe quedar limpia, solo con carpetas y la Master Memoria.
 
-4. **Notificación**
+4. **Eliminación de Cache (Anti-Lag)**
+    - **OBJETIVO:** Liberar la memoria del IDE ("Antigravity").
+    - **COMANDO:** `rm -rf node_modules/.vite node_modules/.cache` (o equivalente en PowerShell).
+    - Esto fuerza a Vite a reconstruir dependencias limpias en el próximo inicio.
+
+5. **Notificación**
     - Confirma: "SYNC COMPLETADO. Memoria Maestra actualizada."
 
 ## Comandos Útiles
