@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSupabaseClient } from '../../../services/authService';
+import { getSupabaseClient } from '../../../../services/authService';
 import { Folder, FileText, Plus, Github, Search, ArrowRight, Grid, List as ListIcon, Clock, ChevronRight } from 'lucide-react';
 
 interface Project {
