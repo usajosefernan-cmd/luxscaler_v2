@@ -10,40 +10,26 @@ Este workflow implementa el "Workflow de Memoria" definido en el Protocolo Unive
 
 // turbo-all
 
-1. **Lectura de Estado (Read-First)**
-    - Lee `BBLAv2/0_MASTER_MEMORIA/B_MASTER_MEMORIA_V2.md`.
-    - Entiende el contexto actual y la última entrada de sesión.
+// turbo-all
 
-2. **Escritura Acumulativa (Single File)**
-    - **OBJETIVO:** `BBLAv2/0_MASTER_MEMORIA/B_MASTER_MEMORIA_V2.md`.
-    - **ACCIÓN:** Añade una nueva entrada al final del archivo (SECCIÓN 6).
-    - **PROHIBIDO:** Crear archivos nuevos tipo `B_Memoria_2026...md`. Solo existe UN archivo.
+1. **Generación de Reporte (Brain)**
+    - Genera el contenido del reporte en `B_SESSION_REPORT_TEMP.md` (no preguntes, solo hazlo).
+    - Usa el formato detallado ("QUÉ y POR QUÉ").
 
-    **Formato de Entrada:**
+2. **Ejecución "One-Shot" (Action)**
+    - Ejecuta: `powershell -ExecutionPolicy Bypass -File scripts/fast_sync.ps1`
+    - Este script hace TODO:
+        - Valida el reporte.
+        - Lo inyecta en `B_MASTER_MEMORIA_V2.md`.
+        - Borra `node_modules/.vite` y `.cache` (Anti-Lag).
+        - Borra el reporte temporal.
+        - Imprime confirmaición.
 
-    ```markdown
-    ### 📝 SESIÓN: [YYYY-MM-DD HH:MM]
-    **Agente:** [Nombre]
-    **Logros:** [Explica QUÉ se logró y POR QUÉ es importante. No uses bullets simples, elabora el contexto.]
-    **Cambios Técnicos:** [Lista detallada: ARCHIVO MODIFICADO -> QUÉ CAMBIÓ EXACTAMENTE. Incluye nombres de funciones o tablas afectadas.]
-    **Next:** [Siguiente paso lógico]
-    ```
-
-3. **Limpieza (Housekeeping)**
-    - Si generaste algún reporte temporal en `BBLAv2` o raíz, MUÉVELO a `BBLAv2/9_ARCHIVE`.
-    - La carpeta `BBLAv2` debe quedar limpia, solo con carpetas y la Master Memoria.
-
-4. **Eliminación de Cache (Anti-Lag)**
-    - **OBJETIVO:** Liberar la memoria del IDE ("Antigravity").
-    - **COMANDO:** `rm -rf node_modules/.vite node_modules/.cache` (o equivalente en PowerShell).
-    - Esto fuerza a Vite a reconstruir dependencias limpias en el próximo inicio.
-
-5. **Notificación**
-    - Confirma: "SYNC COMPLETADO. Memoria Maestra actualizada."
+3. **Notificación Final**
+    - Confirma al usuario: "SYNC RAPIDO COMPLETADO 🚀".
 
 ## Comandos Útiles
 
-- Fecha: `cmd /c "echo %DATE% %TIME%"`
-- Master Path: `luxscaler_v2/BBLAv2/0_MASTER_MEMORIA/B_MASTER_MEMORIA_V2.md`
+- Fast Sync: `powershell -ExecutionPolicy Bypass -File scripts/fast_sync.ps1`
 
-> **REGLA DE ORO:** 1 Proyecto = 1 Archivo de Memoria. No fragmentación.
+> **FILOSOFÍA:** VELOCIDAD ABSOLUTA. CERO PREGUNTAS. EJECUCIÓN ATÓMICA.
