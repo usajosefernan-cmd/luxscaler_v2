@@ -1,0 +1,39 @@
+# 0. PROTOCOLO SUPREMO: CLOUD DIRECT (NO DOCKER)
+
+Ref: `BBLAv2/3_PROTOCOLS/B_PROTO_SUPABASE_MCP.md`
+
+> **ESTADO:** ACTIVO (GOLD STANDARD)
+> **REGLA DE ORO:** El entorno local NO simula nada. Operamos directamente contra la Nube.
+
+## A. INFRAESTRUCTURA (PROHIBICIONES)
+
+1. ❌ **NO DOCKER:** Prohibido usar `supabase start`, `db start` o contenedores locales. Ahorramos RAM y evitamos conflictos de red WSL.
+2. ❌ **NO NODE EN EDGE:** Las Edge Functions usan **Deno**. Prohibido `npm install` o `require` dentro de `supabase/functions`. Solo `import` de URL (esm.sh).
+3. ❌ **PUERTO FRONTEND:** Estrictamente **8081**. Si está ocupado, MATA el proceso. No uses el 8082.
+
+## B. CENTRO DE COMANDO: `fast_sync.ps1`
+
+Toda operación de backend DEBE pasar por este script. No uses CLI sueltos.
+**Ubicación:** `.\scripts\fast_sync.ps1`
+
+| Opción | Acción | Descripción |
+| :--- | :--- | :--- |
+| **1** | **Migraciones SQL** | Sube `.sql` a la nube vía túnel `migration-runner`. NO usa puerto 5432 local. |
+| **2** | **Deploy Edge** | Despliega TS a la red global con `--no-verify-jwt`. Edita en `supabase/functions/`. |
+| **3** | **Secrets** | Configura API Keys en la nube. |
+| **5** | **Logs** | Ver errores en tiempo real. |
+
+## C. WORKFLOW DE DESARROLLO
+
+1. **Frontend:** `npm run dev` (Invoca limpieza de zombies y levanta Vite en 8081).
+2. **Backend:**
+   - ¿Cambio en DB? -> Crea archivo en `supabase/migrations/` -> Opción 1 script.
+   - ¿Cambio en API? -> Edita `index.ts` -> Opción 2 script.
+
+## D. FUENTE DE VERDAD
+
+Si tienes dudas, LEE antes de actuar:
+
+- Arquitectura General: `BBLAv2/1_ARCHITECTURES/B_ARCH_CORE_V32.md`
+- Protocolo Backend: `BBLAv2/3_PROTOCOLS/B_PROTO_SUPABASE_MCP.md`
+- Estructura Frontend: `BBLAv2/1_ARCHITECTURES/B_ARCH_FRONTEND.md`

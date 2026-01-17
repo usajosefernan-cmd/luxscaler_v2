@@ -23,21 +23,15 @@ import {
     Image as ImageIcon,
     Wand2,
     Share2,
-    Github
+    Github,
+    GitBranch,
+    Activity,
+    RefreshCw
 } from 'lucide-react';
 import { DocState } from '../types';
 import { geminiService } from '../services/geminiService';
 
-interface EditorPanelProps {
-    docState: DocState;
-    setDocContent: (content: string) => void;
-    setDocTitle: (title: string) => void;
-    isTyping: boolean;
-    onSave: () => void;
-    appLink: string;
-    setAppLink: (link: string) => void;
-    onShowHistory: () => void;
-}
+// (Redundant interface removed)
 
 interface Section {
     id: string;
@@ -298,8 +292,9 @@ const InfographicGenerator = ({ sectionTitle }: { sectionTitle: string }) => {
             // setImageUrl("https://source.unsplash.com/random/800x600?tech"); 
             if (url) setImageUrl(url);
 
-        } catch (e) {
+        } catch (e: any) {
             console.error("Gen failed", e);
+            alert(`Error generando infografía: ${e.message}`);
         } finally {
             setGenerating(false);
         }
@@ -336,45 +331,119 @@ const SectionContentRenderer = ({ content }: { content: string }) => {
     const parts = content.split(/(```[\s\S]*?```)/g);
 
     return (
-        <div className="text-slate-600 leading-relaxed space-y-4">
+        <div className="text-slate-600 leading-relaxed space-y-4 font-normal">
             {parts.map((part, idx) => {
                 if (part.startsWith('```')) {
-                    const clean = part.replace(/```(flow|mindmap|json)?\n?/, '').replace(/```$/, '');
-                    if (part.includes('```flow')) {
+                    const match = part.match(/```(\w+)?/);
+                    const lang = match ? match[1] : '';
+                    const clean = part.replace(/```(\w+)?\n?/, '').replace(/```$/, '');
+
+                    if (lang === 'flow' || clean.includes('graph TD')) {
                         return <FlowRenderer key={idx} code={clean} />;
-                    } else if (part.includes('```mindmap')) {
+                    } else if (lang === 'mindmap' || clean.includes('mindmap')) {
                         return <MindMapRenderer key={idx} code={clean} />;
-                    } else if (part.includes('|---')) { // Simple table detection logic
+                    } else if (clean.trim().includes('|---') || (clean.trim().startsWith('|') && clean.includes('|'))) {
                         return <TableRenderer key={idx} markdownTable={clean} />;
                     }
                     else {
+                        // PREMIUM CODE BLOCK (Mac/VSCode Style)
                         return (
-                            <pre key={idx} className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono overflow-x-auto shadow-inner">
-                                {clean}
-                            </pre>
+                            <div key={idx} className="rounded-xl overflow-hidden shadow-2xl border border-slate-800/50 my-6 bg-[#0F0F0F] group hover:shadow-blue-500/10 transition-all duration-300">
+                                <div className="bg-[#1A1A1A] p-2 px-4 flex items-center justify-between border-b border-white/5 select-none">
+                                    <div className="flex gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] shadow-sm" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] shadow-sm" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F] shadow-sm" />
+                                    </div>
+                                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-bold">{lang || 'PLAINTEXT'}</span>
+                                </div>
+                                <div className="relative">
+                                    <pre className="bg-[#050505] text-blue-100 p-5 text-[13px] font-mono overflow-x-auto leading-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                        {clean}
+                                    </pre>
+                                    <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="text-[10px] text-slate-600 bg-white/5 px-2 py-1 rounded">ReadOnly</div>
+                                    </div>
+                                </div>
+                            </div>
                         );
                     }
                 }
-                // Text rendering (supports simple newlines or MD subset)
-                return part.split('\n').map((line, lIdx) => {
-                    if (!line.trim()) return <br key={lIdx} />;
-                    if (line.startsWith('#')) return null; // Headers handled by parent
-                    if (line.startsWith('- ')) return <li key={lIdx} className="ml-4 list-disc marker:text-blue-400">{line.replace('- ', '')}</li>;
-                    if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
-                        return <div key={lIdx} className="bg-amber-50 text-amber-700 px-3 py-2 rounded border-l-2 border-amber-400 text-xs italic my-2 flex gap-2"><AlertCircle size={14} /> {line}</div>;
+
+                // Enhanced Text Parsing & TABLE DETECTION
+                // Split by potential table blocks (start with | and end with |)
+                const textNodes = [];
+                const tableRegex = /(\n\|.*\|(?:\n\|.*\|)+)/g;
+                const subParts = part.split(tableRegex);
+
+                subParts.forEach((subPart, subIdx) => {
+                    const trimmedSub = subPart.trim();
+                    if (trimmedSub.startsWith('|') && trimmedSub.includes('|') && trimmedSub.split('\n').length > 1) {
+                        // It's a table!
+                        textNodes.push(<TableRenderer key={`tbl-${subIdx}`} markdownTable={trimmedSub} />);
+                        return;
                     }
-                    // Bold support
-                    const parts = line.split(/(\*\*.*?\*\*)/);
-                    return <p key={lIdx} className="min-h-[10px]">
-                        {parts.map((p, pIdx) => {
-                            if (p.startsWith('**')) return <strong key={pIdx} className="text-slate-800 font-bold">{p.replace(/\*\*/g, '')}</strong>;
-                            return <span key={pIdx}>{p}</span>;
-                        })}
-                    </p>;
+
+                    // Standard Paragraph Parsing for non-table parts
+                    const lines = subPart.split('\n');
+                    lines.forEach((line, lIdx) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) {
+                            textNodes.push(<div key={`sp-${subIdx}-${lIdx}`} className="h-2" />);
+                            return;
+                        }
+                        if (line.startsWith('#')) return; // Headers handled by parent
+
+                        // List Items
+                        if (line.startsWith('- ') || line.startsWith('* ')) {
+                            textNodes.push(
+                                <div key={`li-${subIdx}-${lIdx}`} className="flex gap-3 ml-2 items-start group/li">
+                                    <div className="mt-2 w-1.5 h-1.5 rounded-full bg-blue-400 group-hover/li:bg-blue-300 transition-colors shrink-0" />
+                                    <p className="text-slate-200/90 leading-7">{parseFormatting(line.replace(/^[-*] /, ''))}</p>
+                                </div>
+                            );
+                            return;
+                        }
+
+                        // Alerts / Callouts
+                        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                            const alertType = trimmed.includes('!') || trimmed.includes('ERROR') ? 'red' : 'amber';
+                            const styles = alertType === 'red'
+                                ? "bg-red-500/10 text-red-400 border-red-500/30"
+                                : "bg-amber-500/10 text-amber-400 border-amber-500/30";
+
+                            textNodes.push(
+                                <div key={`al-${subIdx}-${lIdx}`} className={`${styles} px-4 py-3 rounded-lg border-l-4 text-sm font-medium my-3 flex gap-3 items-center backdrop-blur-sm`}>
+                                    <AlertCircle size={16} />
+                                    {trimmed.replace(/^\[|\]$/g, '')}
+                                </div>
+                            );
+                            return;
+                        }
+
+                        // Standard Paragraph
+                        textNodes.push(
+                            <p key={`p-${subIdx}-${lIdx}`} className="text-slate-300 leading-7 mb-2">
+                                {parseFormatting(line)}
+                            </p>
+                        );
+                    });
                 });
+
+                return <div key={idx}>{textNodes}</div>;
             })}
         </div>
     );
+};
+
+// Simple formatter for Bold/Italic
+const parseFormatting = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*|`.*?`)/);
+    return parts.map((p, pIdx) => {
+        if (p.startsWith('**')) return <strong key={pIdx} className="text-white font-bold tracking-tight">{p.replace(/\*\*/g, '')}</strong>;
+        if (p.startsWith('`')) return <code key={pIdx} className="bg-slate-800 text-blue-300 px-1.5 py-0.5 rounded textxs font-mono border border-slate-700/50">{p.replace(/`/g, '')}</code>;
+        return <span key={pIdx}>{p}</span>;
+    });
 };
 
 interface EditorPanelProps {
@@ -385,21 +454,20 @@ interface EditorPanelProps {
     setDocContent: (content: string) => void;
     setDocTitle: (title: string) => void;
     isTyping: boolean;
+    isUpdating?: boolean;
     onSave: () => void;
     appLink: string;
     setAppLink: (link: string) => void;
     onShowHistory: () => void;
-
-    // New Props for Doc Management
     availableDocs: string[];
     onLoadDocument: (title: string) => void;
     onNewDocument: () => void;
     showDocSelector: boolean;
     setShowDocSelector: (show: boolean) => void;
-
-    // GitHub Integration
     onPushToGithub?: () => void;
     hasGithubRepo?: boolean;
+    currentActivity?: string;
+    onContextComment: (sectionTitle: string) => void;
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = ({
@@ -417,10 +485,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     showDocSelector,
     setShowDocSelector,
     onPushToGithub,
-    hasGithubRepo
+    hasGithubRepo,
+    currentActivity,
+    onContextComment
 }) => {
     const [viewMode, setViewMode] = useState<'visual' | 'source'>('visual');
     const [showToc, setShowToc] = useState(true);
+
+    // Metrics Delta
+    const [prevContentLength, setPrevContentLength] = useState(docState.content.length);
+    const [lastDelta, setLastDelta] = useState(0);
+
+    useEffect(() => {
+        if (!isTyping && docState.content.length !== prevContentLength) {
+            setLastDelta(docState.content.length - prevContentLength);
+            setPrevContentLength(docState.content.length);
+        }
+    }, [docState.content, isTyping, prevContentLength]);
 
     const sections = useMemo(() => parseMarkdownToSections(docState.content), [docState.content]);
 
@@ -449,7 +530,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     };
 
     return (
-        <div className="flex-1 flex flex-col bg-[#f8f9fa] relative overflow-hidden h-full text-slate-800 font-sans">
+        <div className="flex-1 grid grid-rows-[auto_1fr_auto] bg-[#f8f9fa] relative overflow-hidden h-full text-slate-800 font-sans min-w-0 min-h-0">
 
             {/* HEADER */}
             <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 shadow-sm z-20">
@@ -550,7 +631,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 relative flex overflow-hidden">
+            <div className="relative flex overflow-hidden min-h-0 bg-slate-50/50">
 
                 {/* TOC */}
                 <div className={`border-r border-slate-200 bg-white flex flex-col transition-all duration-300 ease-in-out ${showToc ? 'w-64' : 'w-0 opacity-0'}`}>
@@ -572,7 +653,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 </div>
 
                 {/* MAIN DOCUMENT */}
-                <div className="flex-1 overflow-y-auto bg-slate-50/50 relative custom-scrollbar">
+                <div className="flex-1 overflow-y-auto bg-slate-50/50 relative custom-scrollbar min-h-0 pb-32">
 
                     <button
                         onClick={() => setShowToc(!showToc)}
@@ -582,16 +663,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                         <List size={16} />
                     </button>
 
-                    {/* AI STATUS */}
-                    <div className="absolute top-4 right-8 flex flex-col items-end gap-2 pointer-events-none z-30">
-                        <div className="bg-white/90 backdrop-blur border border-blue-100 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg shadow-slate-200/50">
-                            <div className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-600 tracking-wider">SINCRONIZACIÓN_GEMINI: {isTyping ? 'ESCRIBIENDO' : 'LISTO'}</span>
-                        </div>
-                    </div>
+                    {/* (Status moved to Footer) */}
 
                     <div className="max-w-[850px] mx-auto min-h-screen bg-white shadow-xl shadow-slate-200/50 my-8 px-12 py-16 transition-all">
                         {viewMode === 'source' ? (
@@ -618,7 +690,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                                             {section.level === 1 && <h1 className="text-3xl font-bold text-blue-900 border-b-2 border-blue-100 pb-2 w-full mt-8 mb-4">{section.title}</h1>}
                                             {section.level === 2 && <h2 className="text-xl font-bold text-slate-800 mt-6 flex items-center gap-3"><span className="text-slate-300 font-normal text-base">#{idx + 1}</span> {section.title}</h2>}
                                             {section.level >= 3 && <h3 className="text-md font-semibold text-slate-700 mt-4 uppercase tracking-wide">{section.title}</h3>}
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => onContextComment(section.title)}
+                                                    className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-100 rounded transition-colors"
+                                                    title="Comentar sobre esta sección (+coment)"
+                                                >
+                                                    <Wand2 size={14} />
+                                                </button>
                                                 <StatusBadge status={section.status} />
                                             </div>
                                         </div>
@@ -633,25 +713,69 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                             </div>
                         )}
                     </div>
-                    <div className="h-20"></div>
                 </div>
             </div>
 
-            {/* FOOTER */}
-            <div className="h-8 bg-slate-800 text-slate-400 flex items-center justify-between px-4 text-[10px] font-sans z-20">
-                <div className="flex items-center gap-4">
-                    <span className="flex items-center gap-1 text-slate-300"><Wifi size={10} className="text-emerald-500" /> CONECTADO</span>
-                    <span>utf-8</span>
-                    <span>markdown+flow</span>
-                </div>
-                <div className="flex items-center gap-4">
-                    <span>{docState.content.split('\n').length} líneas</span>
-                    <span>{docState.content.length} caracteres</span>
+            {/* STATUS BAR FOOTER (Enhanced Visor) */}
+            <div className={`h-8 border-t border-white/10 flex items-center justify-between px-4 text-[11px] font-sans z-30 select-none transition-colors duration-300
+                ${isTyping ? 'bg-indigo-600 animate-pulse' : 'bg-[#007acc]'} text-white`}>
+
+                <div className="flex items-center gap-6">
+                    {/* Activity Section */}
                     <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500" style={{ width: `${completionPercentage}%` }}></div>
+                        <div className={`w-2 h-2 rounded-full ${isTyping ? 'bg-yellow-300 animate-ping' : 'bg-emerald-400 opacity-60'}`} />
+                        <span className="font-bold tracking-tight uppercase opacity-90">
+                            {isTyping ? 'IA OPERANDO' : 'SISTEMA LISTO'}
+                        </span>
+                    </div>
+
+                    {/* Live Log */}
+                    <div className="h-4 w-px bg-white/20 mx-1" />
+                    <div className="flex items-center gap-2 max-w-[400px] truncate overflow-hidden">
+                        <Activity size={12} className={isTyping ? 'text-yellow-200' : 'opacity-40'} />
+                        <span className="italic opacity-80 whitespace-nowrap">
+                            {currentActivity || (isTyping ? 'Analizando documento...' : 'Esperando comandos del arquitecto...')}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-5 font-mono">
+                    {/* Metrics Section */}
+                    <div className="flex items-center gap-4 bg-black/10 px-3 py-1 rounded-sm border border-white/5">
+                        <div className="flex items-center gap-1.5" title="Líneas">
+                            <span className="opacity-50">LN:</span>
+                            <span className="font-bold">{docState.content.split('\n').length}</span>
                         </div>
-                        <span>{completionPercentage}% Completado</span>
+                        <div className="flex items-center gap-1.5" title="Palabras">
+                            <span className="opacity-50">W:</span>
+                            <span className="font-bold">{docState.content.trim() ? docState.content.trim().split(/\s+/).length : 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" title="Caracteres">
+                            <span className="opacity-50">C:</span>
+                            <span className="font-bold">{docState.content.length}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" title="Tokens aproximados (Chars/4)">
+                            <span className="opacity-50">TK:</span>
+                            <span className="font-bold text-blue-200">{Math.ceil(docState.content.length / 4)}</span>
+                        </div>
+
+                        {/* DELTA VISUALIZER */}
+                        {lastDelta !== 0 && (
+                            <div className={`flex items-center gap-1 px-1.5 rounded text-[9px] font-black ${lastDelta > 0 ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
+                                {lastDelta > 0 ? '+' : ''}{lastDelta} CHARS
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Environment Info */}
+                    <div className="flex items-center gap-3 opacity-70">
+                        <span className="hover:text-yellow-200 cursor-help transition-colors">UTF-8</span>
+                        <span className="bg-white/10 px-1.5 py-0.5 rounded text-[9px] font-bold">MARKDOWN</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-emerald-300">
+                        <CheckCircle2 size={12} />
+                        <span className="font-bold uppercase tracking-widest text-[9px]">Sincronizado</span>
                     </div>
                 </div>
             </div>

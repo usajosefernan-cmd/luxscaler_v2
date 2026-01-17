@@ -1,53 +1,58 @@
 # ANTIGRAVITY GLOBAL PROTOCOLS (MASTER GUIDE)
 
 > **ESTADO:** ACTIVO
-> **APLICA A:** Todos los Agentes (Aba, Neo, etc).
+> **APLICA A:** Todos los Agentes (Aba, Neo, etc) y **HUMANOS**.
 > **PRIORIDAD:** ROOT (Kernel Level).
 
-## 0. PROTOCOLO DE AGENTE INTELIGENTE
+> **NUEVA NORMA (MANDATORIO):** ANTES de tocar nada de Backend/DB, **LEER OBLIGATORIAMENTE** `BBLAv2/3_PROTOCOLS/B_PROTO_SUPABASE_MCP.md`.
+> **NUEVA NORMA (AI AGENTS):** Toda edición de documentos largos debe seguir el protocolo semántico `BBLAv2/3_PROTOCOLS/B_PROTO_AI_ENGINEERING.md`.
 
-Eres una IA con capacidades asimétricas: - INPUT: Puedes LEER/PROCESAR cantidades masivas de información (1M+ tokens) - OUTPUT: Tu capacidad de ESCRIBIR/RESPONDER es LIMITADA (~64k tokens por respuesta) Esta asimetría requiere que trabajes de forma ESTRATÉGICA. Sigue este protocolo SIEMPRE: ══════════════════════════════════════ FASE 0: COMPRENSIÓN DEL CONTEXTO ══════════════════════════════════════ Antes de actuar, SIEMPRE: 1. LEE TODO el contexto disponible (documentos, código, historial, archivos) 2. IDENTIFICA el alcance real de la tarea 3. DETECTA dependencias y relaciones entre partes 4. ESTIMA la complejidad (simple/media/compleja/masiva) Pregúntate: - ¿Qué tengo disponible para leer? - ¿Qué me piden hacer exactamente? - ¿Qué partes están conectadas entre sí? - ¿Cabe mi respuesta en un solo output o necesito dividir? ══════════════════════════════════════ FASE 1: PLANIFICACIÓN ESCALADA ══════════════════════════════════════ NUNCA ejecutes directamente. Primero PLANIFICA: ### Para tareas SIMPLES (respuesta < 2000 palabras): → Ejecuta directamente ### Para tareas MEDIANAS (respuesta 2000-10000 palabras): → Divide en 2-3 bloques → Muestra plan breve → Ejecuta bloque por bloque ### Para tareas COMPLEJAS (respuesta 10000-30000 palabras): → Crea plan detallado por fases → Muestra: "FASE 1/5: [descripción]" → Pide confirmación antes de cada fase → Ejecuta fase por fase ### Para tareas MASIVAS (respuesta >30000 palabras o múltiples archivos): → Crea ROADMAP completo con checkpoints → Divide en SPRINTS de máximo 10000 palabras cada uno → Al final de cada sprint: resumen + validación → Mantén índice de lo completado vs pendiente FORMATO DE PLAN:`
+---
 
-📋 PLAN DE EJECUCIÓN  
-├─ Complejidad: [SIMPLE/MEDIA/COMPLEJA/MASIVA]  
-├─ Estimación: [X] bloques de [Y] palabras aprox  
-├─ Fases:  
-│ ├─ FASE 1: [descripción] - [X palabras est.]  
-│ ├─ FASE 2: [descripción] - [X palabras est.]  
-│ └─ FASE N: [descripción] - [X palabras est.]  
-└─ ¿Procedo con FASE 1? (responde SI/NO/MODIFICAR)
+## 🗺️ 0. MAPA DEL ECOSISTEMA (LEER PRIMERO)
 
-text
+Si eres nuevo (IA o Humano), **EMPIEZA AQUÍ**. Así es como funciona la aplicación:
 
-`══════════════════════════════════════ FASE 2: EJECUCIÓN CONTROLADA ══════════════════════════════════════ ### REGLA DE ORO: UN OUTPUT = UNA UNIDAD COMPLETA Cada respuesta debe ser una UNIDAD FUNCIONAL COMPLETA: - Si es código: que compile/funcione por sí solo - Si es texto: que tenga sentido independiente - Si es análisis: que tenga conclusión parcial ### NUNCA: ❌ Cortar a mitad de una función/párrafo/idea ❌ Dejar trabajo incompleto sin indicar qué falta ❌ Asumir que el usuario sabe dónde continuar ❌ Perder contexto entre respuestas ### SIEMPRE: ✅ Terminar cada bloque en punto lógico ✅ Indicar: "COMPLETADO: [X] | PENDIENTE: [Y]" ✅ Dar instrucción clara de cómo continuar ✅ Mantener numeración/referencias consistentes ══════════════════════════════════════ FASE 3: GESTIÓN DE MODIFICACIONES ══════════════════════════════════════ Cuando modifiques algo existente (código, documento, configuración): ### ANTES de modificar: 1. ANALIZA qué otras partes dependen de lo que vas a cambiar 2. LISTA todas las ubicaciones afectadas 3. MUESTRA el impacto: "Cambiar X afectará: A, B, C" 4. ESPERA confirmación ### DURANTE la modificación: 1. Modifica el elemento principal 2. Actualiza TODAS las dependencias en CASCADA 3. Muestra progreso: "✅ Elemento 1/4 actualizado" ### DESPUÉS de modificar: 1. VALIDA consistencia (¿todo encaja?) 2. REPORTA cambios: antes → después 3. LISTA si quedó algo pendiente ### VALIDACIÓN DE CONTENIDO: - Si REDUCES contenido → PREGUNTA primero - Si ELIMINAS algo → CONFIRMA explícitamente - Si CAMBIAS estructura → MUESTRA comparativa ══════════════════════════════════════ FASE 4: MEMORIA Y CONTINUIDAD ══════════════════════════════════════ Entre respuestas, MANTÉN: ### ÍNDICE DE ESTADO:`
+### 🧩 Arquitectura de APIs (Quién hace qué)
 
-📊 ESTADO ACTUAL:  
-├─ Completado: [lista]  
-├─ En progreso: [actual]  
-├─ Pendiente: [lista]  
-├─ Bloqueado por: [dependencias si las hay]  
-└─ Siguiente acción: [qué sigue]
+| Función | Proveedor | Modelo Principal | Dónde está la Key | Costo Aprox |
+| :--- | :--- | :--- | :--- | :--- |
+| **CHAT / TEXTO** | Google (Gemini) | `gemini-2.0-flash` | Supabase Secrets (`GEMINI_API_KEY`) | Gratuito (Limitado) |
+| **GEN. IMÁGENES** | LaoZhang API | `seedream-4-0` / `gemini-3` | `.env` (`VITE_LAOZHANG_API_KEY`) | $0.025/img |
+| **FOTO FORENSE** | Vertex AI (Google) | `imagen-3.0` | Supabase Secrets | Enterprise |
+| **BASE DE DATOS** | Supabase Cloud | PostgreSQL | Hardcoded en Scripts + `.env` | Tier Pro |
 
-text
+### 📍 Dónde están las Cosas (Configuración)
 
-`### CONTEXTO COMPRIMIDO: Para tareas largas, mantén un "resumen ejecutivo" de: - Decisiones tomadas - Estructura acordada - Convenciones establecidas - Puntos críticos a recordar ══════════════════════════════════════ FASE 5: COMUNICACIÓN CON EL USUARIO ══════════════════════════════════════ ### ANTES de ejecutar tareas grandes: "Voy a [descripción]. Esto requiere [N] fases. ¿Procedo?" ### DURANTE la ejecución: "FASE [N/TOTAL]: [descripción]. Progreso: [X]%" ### AL ENCONTRAR DECISIONES: "Tengo [N] opciones: [lista]. Recomiendo [X] porque [razón]. ¿Confirmas?" ### AL ENCONTRAR PROBLEMAS: "⚠️ Encontré [problema]. Opciones: [A] o [B]. ¿Cómo procedo?" ### AL COMPLETAR: "✅ COMPLETADO: [resumen]. Cambios: [lista]. ¿Revisamos algo?" ══════════════════════════════════════ COMANDOS UNIVERSALES ══════════════════════════════════════ El usuario puede decir: - "PLAN" → Muestra plan completo sin ejecutar - "EJECUTA" → Procede con el plan mostrado - "EJECUTA FASE [N]" → Solo esa fase - "PAUSA" → Detén y muestra estado - "ESTADO" → Muestra progreso actual - "RESUMEN" → Muestra lo completado - "ROLLBACK" → Deshace último cambio - "CONTINÚA" → Sigue desde donde quedó ══════════════════════════════════════ ERRORES CRÍTICOS A EVITAR ══════════════════════════════════════ ❌ Intentar hacer TODO en una respuesta (excede output limit) ❌ Modificar algo sin verificar dependencias ❌ Perder partes del trabajo por límite de tokens ❌ Asumir contexto que no tienes ❌ Ejecutar sin plan en tareas complejas ❌ Dejar trabajo a medias sin indicar estado ❌ Reducir/eliminar contenido sin autorización ❌ Cambiar estructura sin mostrar impacto ❌ Olvidar actualizar partes relacionadas ❌ Responder con código/texto incompleto ══════════════════════════════════════ INICIO DE SESIÓN ══════════════════════════════════════ Al recibir una tarea: 1. Analiza complejidad 2. Si es SIMPLE → ejecuta directamente 3. Si es MEDIA/COMPLEJA/MASIVA → muestra plan y espera confirmación 4. Ejecuta por fases 5. Reporta al completar Confirma que entiendes respondiendo: "🧠 PROTOCOLO DE AGENTE INTELIGENTE ACTIVO ├─ Input: Sin límite práctico ├─ Output: ~64k tokens/respuesta ├─ Modo: Planificación escalada └─ Listo para recibir instrucciones" === FIN DEL PROTOCOLO ===`
+| Componente | Ubicación Archivo | Dónde se Edita / Gestiona |
+| :--- | :--- | :--- |
+| **Frontend Keys** | `luxscaler_v2/.env` | Editar archivo local `.env` |
+| **Backend Keys** | `Config Secreta` | **Script:** `fast_sync.ps1` (Opción 3) |
+| **Database Schema** | `supabase/migrations/*.sql` | **Script:** `fast_sync.ps1` (Opción 1) |
+| **Backend Logic** | `supabase/functions/*/index.ts` | **Script:** `fast_sync.ps1` (Opción 2) |
+| **Google Cloud** | N/A (Consola Web) | [Google Cloud Console](https://console.cloud.google.com) (Proyecto: `luxifier-node...`) |
+
+### ⚡ Cómo Actualizar Supabase (Backend)
+
+**NO USAR COMANDOS NATIVOS.** Usa exclusivamente el orquestador:
+`.\scripts\fast_sync.ps1`
+
+---
 
 ## 1. ORDEN SUPREMA DE DIRECTORIOS (THE ISLAND)
 
-LuxScaler v2 opera como una unidad independiente. No existen directorios anidados confusos.
+LuxScaler v2 opera como una unidad independiente.
 
 ### 1.1 Estructura Única (Single Root)
 
 Todo el proyecto vive en la raíz de **`luxscaler_v2`**.
 
-* **`/src`**: Código fuente React/Vite.
-* **`/android` & `/ios`**: Contenedores Nativos (NO BORRAR).
-* **`/scripts`**: Herramientas de automatización.
-* **`/BBLAv2`**: Fuente de Verdad (Documentación).
+* **`/src`**: Código fuente React/Vite (Frontend).
+* **`/supabase`**: Lógica de Backend (Functions) y Base de Datos (Migrations).
+* **`/scripts`**: Herramientas de automatización Powershell (.ps1).
+* **`/BBLAv2`**: Fuente de Verdad (Documentación y Protocolos).
 
-### 1.2 Regla de Independencia
-
-**JAMÁS** referenciar archivos fuera de esta carpeta. Si necesitas un asset, cópialo dentro.
+**JAMÁS** referenciar archivos fuera de esta carpeta.
 
 ---
 
@@ -55,125 +60,85 @@ Todo el proyecto vive en la raíz de **`luxscaler_v2`**.
 
 ### 2.1 El Puerto Sagrado: 8081
 
-La aplicación **DEBE** correr en el puerto **8081**.
+La aplicación **DEBE** correr en el puerto **8081**. Si está ocupado, el script de arranque lo limpiará.
 
 ### 2.2 Procedimiento de Arranque (Clean Start)
 
-El script de arranque limpia automáticamente procesos zombies.
-
-**Comando Estándar (Desde Raíz):**
+Comando único para desarrolladores:
 
 ```powershell
 npm run dev
-# Ejecuta internamente: ./scripts/kill_zombies.ps1 && vite
+# Esto instala dependencias, mata procesos zombies y levanta el servidor.
 ```
 
 ---
 
 ## 3. HIGIENE DE CÓDIGO
 
-* **TypeScript Estricto:** Nada de `any`.
-* **Rutas Relativas:** Usa `@/` (alias de `./src`) para imports internos. Nunca rutas absolutas (`C:/`).
-* **Idiomas:** Todo string visible debe usar i18next (`t('key')`).
+* **TypeScript Estricto:** Nada de `any`. Tipar todo correctamente.
+* **Rutas Relativas:** Usa `@/` (alias de `./src`) para imports internos.
+* **Idiomas:** Todo texto visible debe usar `i18next`.
 
 ---
 
-## 4. IDENTIDAD DE AGENTE
+## 4. PROTOCOLO DE SUPABASE & NO-DOCKER
 
-En cada `/sync`, declara tu identidad y el hito alcanzado.
+> **Ver Detalle Completo:** `BBLAv2/3_PROTOCOLS/B_PROTO_SUPABASE_MCP.md`
 
-* Ejemplo: "SYNC v2.1 - Decoupling Completed (Agente: Neo)"
+Toda interacción con infraestructura (Migraciones, Deploys, Secrets) se hace a través de: `.\scripts\fast_sync.ps1`.
 
----
+* **Opción 1:** Migraciones SQL.
+* **Opción 2:** Despliegue de Funciones.
+* **Opción 3:** Gestión de Secretos (API Keys).
+* **Opción 7:** Limpieza de Procesos (Si el PC va lento).
 
 ---
 
 ## 5. PROTOCOLO DE ONBOARDING (NUEVOS AGENTES)
 
-Si acabas de aterrizar en este proyecto, sigue este orden para no romper nada:
-
-1. **Lectura Crítica**:
-   
-   * `BBLAv2/0_MASTER_MEMORIA/B_MASTER_MEMORIA_V2.md` (Contexto general).
-   * Este archivo (`B_PROTO_GLOBAL.md`) (Reglas del juego).
-
-2. **Estado Táctico**:
-   
-   * Revisa `task.md` (artifacts) para ver qué está quemando.
-
-3. **Arranque Limpio**:
-   
-   * Abre terminal en raíz `/luxscaler_v2`.
-   * Ejecuta: `npm run dev` (Instala, limpia puertos y mata zombies).
+1. **Lee el Mapa:** La Sección 0 de este documento.
+2. **Identifica Estado:** Lee `task.md` (Artifacts) para ver tareas pendientes.
+3. **Arranca:** `npm run dev` en la terminal.
 
 ---
 
-## 6. PROTOCOLO DE STORAGE (OMNIBUS v19.1)
+## 6. GESTIÓN DE ALMACENAMIENTO (STORAGE)
 
-El almacenamiento es sagrado. No tires archivos al azar.
-
-### 6.1 Estructura "Deep Tree"
-
+Estructura de archivos en Buckets:
 `{USER_ID}/{CONTEXT}/{YYYY-MM-DD}/{SESSION_ID}/{FILENAME}`
 
-* **CONTEXT**: `cases` (forense), `showcase` (galería), `temp` (desechable).
-
-### 6.2 Nomenclatura (Naming Convention)
-
-Todo en `snake_case`. Sin espacios.
-
-* **ORIGINAL**: `{name}_ORIG_.{ext}`
-* **VARIACIÓN**: `{name}_VAR_{strategy}_{vID}.{ext}`
-* **MASTER**: `{name}_MAST_{res}_{refinement}.{ext}`
-
-> "Un archivo mal nombrado es un archivo perdido."
+* **Naming:** `snake_case`. Sin espacios ni caracteres especiales.
+* **Versiones:** Usar sufijos `_v1`, `_v2` o `_FINAL`.
 
 ---
 
-> "Un archivo mal nombrado es un archivo perdido."
+## 7. EDGE FUNCTIONS (REGLAS CRÍTICAS)
+
+### 7.1 JWT Verification (GLOBAL FIX)
+
+**Por defecto**, Supabase requiere JWT válido para invocar Edge Functions. Esto causa error 401 en llamadas públicas.
+
+**Solución Global (Permanente):**
+
+```powershell
+# Despliega TODAS las funciones sin JWT (usar siempre este script)
+.\scripts\deploy_all_functions.ps1
+```
+
+**O manualmente:**
+
+```bash
+npx supabase functions deploy <nombre> --no-verify-jwt
+```
+
+### 7.2 Modelo de Chat (Gemini)
+
+| Modelo | Estado | Uso |
+|:---|:---|:---|
+| `gemini-2.0-flash` | ✅ ACTIVO | Chat (lux-chat) - *Usa v1beta con remapeo de 'function' a 'user'.* |
+| `gemini-1.5-flash` | ⚠️ VOLÁTIL | Posibles 404 en v1beta. |
+| `gemini-3-pro-image-preview` | ✅ ACTIVO | Generación de imágenes (lux-logic via LaoZhang) |
 
 ---
 
-## 7. PROTOCOLO DE MIGRACIÓN SQL (REMOTO / NO-INTERACTIVO)
-
-> **PROBLEMA:** Supabase CLI pide password en `db push`. MCP falla sin token.
-> **SOLUCIÓN:** Usar **Edge Function Tunnel** (`migration-runner`).
-
-### 7.1 Flujo "One-Click Migration"
-
-1. **Preparar SQL**:
-   
-   * Editar `supabase/functions/migration-runner/index.ts`.
-   * Pegar el SQL crudo dentro de la variable `COMPLETE_SEED_SQL`.
-   * *Nota: No usar delimiter `$$` en TS Strings.*
-
-2. **Desplegar Túnel (Deploy)**:
-   
-   ```powershell
-   $env:SUPABASE_ACCESS_TOKEN="sbp_04adaab0d1790b65a2307f342826f4b51c16e466"
-   npx supabase functions deploy migration-runner --project-ref pjscnzymofaijevonxkm --no-verify-jwt
-   ```
-
-3. **Ejecutar Migración (Trigger)**:
-   
-   ```powershell
-   # Invoca la función desde la red local
-   powershell -File scripts/trigger_migration.ps1
-   ```
-
-### 7.2 Credenciales Maestras (Hardcoded)
-
-* **Project Ref:** `pjscnzymofaijevonxkm`
-* **Supabase Access Token:** `sbp_04adaab0d1790b65a2307f342826f4b51c16e466`
-
----
-
-## 8. INTEGRACIONES EXTERNAS (API KEYS)
-
-* **LaoZhang API (Sora/Images):**
-  * **Frontend (Vite):** `.env` -> `VITE_LAOZHANG_API_KEY`
-  * **Backend (Supabase Edge):** Dashboard -> Settings -> Secrets -> `LAOZHANG_API_KEY`
-
----
-
-*Fin del Protocolo Global v2.1*
+*Fin del Protocolo Global v3.1 (JWT Global Fix Edition)*

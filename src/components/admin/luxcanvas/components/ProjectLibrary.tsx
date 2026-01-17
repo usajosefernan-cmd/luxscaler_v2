@@ -19,9 +19,10 @@ interface Document {
 
 interface ProjectLibraryProps {
     onOpenDocument: (docId: string, title: string) => void;
+    onBack?: () => void;
 }
 
-export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument }) => {
+export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument, onBack }) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -71,13 +72,26 @@ export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument }
     const handleCreateProject = async () => {
         if (!newProjectName.trim()) return;
 
+        // [FIX] Get current user to satisfy RLS (auth.uid() = owner_id)
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            alert("Error: Sesión no válida. Por favor recarga.");
+            return;
+        }
+
         const { data, error } = await supabase.from('projects').insert({
             name: newProjectName,
             description: newProjectDesc,
-            github_repo_url: newRepoUrl
-            // owner_id is handled by RLS automatically via auth.uid() usually, 
-            // but we need to ensure current session user is valid.
+            github_repo_url: newRepoUrl,
+            owner_id: user.id
         }).select().single();
+
+        if (error) {
+            console.error("Error creating project:", error);
+            alert(`Error al crear proyecto: ${error.message}`);
+            return;
+        }
 
         if (data) {
             setProjects([data, ...projects]);
@@ -85,8 +99,6 @@ export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument }
             setNewProjectName('');
             setNewProjectDesc('');
             setNewRepoUrl('');
-
-            // Auto-select needed? Maybe just show in list.
         }
     };
 
@@ -115,8 +127,19 @@ export const ProjectLibrary: React.FC<ProjectLibraryProps> = ({ onOpenDocument }
                 {/* HEADER */}
                 <div className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 shadow-sm">
                     <div className="flex items-center gap-4">
-                        <div className="bg-blue-600 p-2 rounded-lg">
-                            <Grid size={20} className="text-white" />
+                        <div className="flex items-center gap-4">
+                            {onBack && (
+                                <button
+                                    onClick={onBack}
+                                    className="p-2 rounded-lg bg-slate-100/50 hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all border border-slate-200/50"
+                                    title="Volver al Dashboard"
+                                >
+                                    <ArrowRight className="rotate-180" size={20} />
+                                </button>
+                            )}
+                            <div className="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-500/30">
+                                <Grid size={20} className="text-white" />
+                            </div>
                         </div>
                         <div>
                             <h1 className="text-lg font-bold text-slate-800">Biblioteca de Proyectos</h1>

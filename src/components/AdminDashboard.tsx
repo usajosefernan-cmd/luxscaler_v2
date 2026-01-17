@@ -1,5 +1,6 @@
 ﻿
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getSupabaseClient, supabaseUrl } from '../services/authService';
 import { deleteGeneration } from '../services/historyService';
 import {
@@ -38,6 +39,7 @@ type Tab = 'REGISTRO_DATOS' | 'ALMACENAMIENTO' | 'LABORATORIO' | 'LUXSCALER' | '
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, standAloneMode = false, defaultShowcase = false }) => {
     const { t } = useTranslation(); // HOOK INIT
+    const navigate = useNavigate(); // For LuxCanvas redirection
     const [currentTab, setCurrentTab] = useState<TabView>(standAloneMode ? 'LUXSCALER' : 'RESUMEN');
     const supabase = getSupabaseClient(); // Fix: Initialize Supabase Client
     const [showcaseMode, setShowcaseMode] = useState<'NONE' | 'LUXSCALER' | 'STYLE' | 'LIGHT'>(defaultShowcase ? 'LUXSCALER' : 'NONE');
@@ -1391,10 +1393,19 @@ FASE 4: REILUMINACIÓN VOLUMÉTRICA`);
         loadUser();
     }, []);
 
+    // Navigation Interceptor
+    const handleTabNavigation = (tab: TabView) => {
+        if (tab === 'LUXCANVAS') {
+            navigate('/admin/canvas');
+            return;
+        }
+        setCurrentTab(tab);
+    };
+
     return (
         <AdminLayout
             currentTab={currentTab}
-            onTabChange={setCurrentTab}
+            onTabChange={handleTabNavigation}
             userEmail={userEmail}
             onLogout={handleLogout}
             standAloneMode={standAloneMode}
@@ -1445,7 +1456,7 @@ FASE 4: REILUMINACIÓN VOLUMÉTRICA`);
 
                 {/* --- TAB: GOD_MODE --- */}
                 {currentTab === 'LUXCANVAS' && (
-                    <div className="h-full w-full relative">
+                    <div className="h-full w-full relative overflow-hidden flex flex-col">
                         <button
                             onClick={() => setCurrentTab('RESUMEN')}
                             className="absolute top-4 left-4 z-50 p-2 bg-black/50 text-white rounded-full hover:bg-white/20 transition-colors"

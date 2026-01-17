@@ -71,7 +71,8 @@ CREATE INDEX IF NOT EXISTS idx_versions_document_id ON public.document_versions(
 COMMENT ON TABLE public.projects IS 'Contenedor principal de LuxCanvas (Repositorios/Proyectos)';
 `;
 
-serve(async (req: Request) => {
+
+Deno.serve(async (req: Request) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -89,19 +90,24 @@ serve(async (req: Request) => {
 
     const sql = postgres(databaseUrl, { max: 1 });
 
-    console.log("[MIGRATION-RUNNER] Executing VERSIONING MIGRATION...");
+    const { query } = await req.json();
+    if (!query) {
+      throw new Error("Missing 'query' in request body");
+    }
 
-    await sql.unsafe(COMPLETE_SEED_SQL);
+    console.log("[MIGRATION-RUNNER] Executing DYNAMIC SQL...");
+    console.log("Length:", query.length);
 
-    console.log("[MIGRATION-RUNNER] SUCCESS - Table document_versions created/verified");
+    const result = await sql.unsafe(query);
 
+    console.log("[MIGRATION-RUNNER] SUCCESS");
     await sql.end();
 
     return new Response(
-      JSON.stringify({ success: true, message: "MIGRATION SUCCESS: document_versions table ready" }),
+      JSON.stringify({ success: true, data: result }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[MIGRATION-RUNNER] ERROR:", error.message);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
@@ -109,3 +115,4 @@ serve(async (req: Request) => {
     );
   }
 });
+

@@ -1,16 +1,15 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-locize-backend';
+// import Backend from 'i18next-locize-backend';
 
-// LOCIZE CONFIG - PROJECT ID CORRECTO: eyfo2umc
-// LOCIZE CONFIG
-const locizeOptions = {
-    projectId: import.meta.env.VITE_LOCIZE_PROJECT_ID || 'eyfo2umc',
-    apiKey: import.meta.env.VITE_LOCIZE_API_KEY || '6779d3af-6d78-4c2b-ae81-99ca03fc8278', // Read-Only por defecto si no hay variable
-    referenceLng: 'en',
-    version: 'latest'
-};
+// LOCIZE CONFIG - DISABLED FOR LOCAL DEV
+// const locizeOptions = {
+//     projectId: import.meta.env.VITE_LOCIZE_PROJECT_ID || 'eyfo2umc',
+//     apiKey: import.meta.env.VITE_LOCIZE_API_KEY || '6779d3af-6d78-4c2b-ae81-99ca03fc8278', // Read-Only por defecto si no hay variable
+//     referenceLng: 'en',
+//     version: 'latest'
+// };
 
 // TRADUCCIONES LOCALES EMBEBIDAS (RESPALDO)
 const localResources = {
@@ -108,7 +107,7 @@ const localResources = {
 
 // Respetar preferencia del usuario (detectada por LanguageDetector)\n// Si no hay preferencia guardada, usar 'en' como default (configurado en init)\n
 i18n
-    .use(Backend)
+    // .use(Backend) // DISABLED LOCIZE
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
@@ -118,8 +117,8 @@ i18n
         supportedLngs: ['es', 'en', 'de', 'fr', 'ja', 'zh', 'ar'],
         debug: false,
 
-        backend: locizeOptions,
-        saveMissing: true, // Auto-guardar claves nuevas en Locize
+        // backend: locizeOptions, // DISABLED LOCIZE
+        // saveMissing: true, 
 
         interpolation: {
             escapeValue: false,

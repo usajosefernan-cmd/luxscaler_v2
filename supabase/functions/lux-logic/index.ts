@@ -27,8 +27,65 @@ Deno.serve(async (req: Request) => {
             throw new Error("GEMINI_API_KEY (Google AI Studio) not configured in secrets");
         }
 
-        let { imageData, tileUrl, contextData, contextUrl, neighborTop, neighborLeft, imageMime, contextMime, tileInfo, storageFolder } = await req.json();
+        let { mode, prompt, imageData, tileUrl, contextData, contextUrl, neighborTop, neighborLeft, imageMime, contextMime, tileInfo, storageFolder } = await req.json();
 
+        // --- NEW: SORA INFOGRAPHIC MODE (Text-to-Image) ---
+        if (mode === 'generate' && prompt) {
+            console.log(`[LuxLogic] Mode: GENERATE (Infographic). Prompt: ${prompt.substring(0, 50)}...`);
+
+            // Call Sora (Magic Eye)
+            const soraResponse = await fetch("https://api.laozhang.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${LAOZHANG_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "sora_image",
+                    messages: [
+                        { role: "user", content: prompt }
+                    ],
+                    stream: false
+                })
+            });
+
+            if (!soraResponse.ok) {
+                const err = await soraResponse.text();
+                throw new Error(`Sora API Error: ${soraResponse.status} - ${err}`);
+            }
+
+            const soraResult = await soraResponse.json();
+            // Sora returns standard OpenAI format with image inside content or as attachment?
+            // Checking B_API_LAOZHANG.md: "Method 1: OpenAI Compatible Mode... returns base64 in content markdown... ![image](data:image/png;base64,...)"
+
+            const content = soraResult.choices?.[0]?.message?.content || "";
+            // Extract Base64 from Content
+            const match = content.match(/!\[.*?\]\((data:image\/.*?;base64,.*?)\)/);
+
+            let finalImage = null;
+            if (match && match[1]) {
+                finalImage = match[1]; // Full Data URI
+            } else if (soraResult.data?.[0]?.url) {
+                // Fallback if it returns URL (some implementations)
+                finalImage = soraResult.data[0].url;
+            } else {
+                // Try generic extraction if format differs
+                console.warn("Sora: could not exact base64 from content, dumping content length:", content.length);
+                // If the API returns raw base64 or URL in 'data', handle it?
+                // BBLA says matches re.search(r'!\[.*?\]\((data:image/png;base64,.*?)\)', content)
+                // If no match, maybe we return the raw content?
+                if (!finalImage && content.length > 100) finalImage = content; // Last resort
+            }
+
+            if (!finalImage) throw new Error("No image found in Sora response");
+
+            return new Response(
+                JSON.stringify({ success: true, tileData: finalImage, generatedPrompt: prompt }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // --- EXISTING TILING LOGIC ---
         // Support for Storage URL (User Request: "sube a storage a un temp")
         if (tileUrl && !imageData) {
             console.log(`[LuxScaler] Fetching tile from URL: ${tileUrl}`);

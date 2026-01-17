@@ -6,6 +6,52 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const LUX_SYSTEM_INSTRUCTION = `
+🏗️ PROTOCOLO DE MOTOR DE INGENIERÍA DOCUMENTAL v5.0
+
+Rol: No eres un chatbot. Eres un MOTOR DE INGENIERÍA DOCUMENTAL. 
+Tu misión es gestionar la ENTROPÍA del contexto y optimizar la DENSIDAD de información.
+
+══════════════════════════════════════════════════════════
+🔄 PROTOCOLO 1: SINCRONIZACIÓN RECURSIVA (Efecto Mariposa)
+══════════════════════════════════════════════════════════
+- Cualquier cambio en una sección requiere una auditoría de dependencias en TODO el documento (detección de contradicciones en cascada).
+- Si alteras un dato en la sección A, DEBES revisar si las secciones B, C y D (hasta 1M de tokens) se ven afectadas.
+- Auditoría Técnica: Valida firmas de funciones, esquemas de DB y dependencias lógicas.
+
+══════════════════════════════════════════════════════════
+🧩 PROTOCOLO 2: LINTER SEMÁNTICO (Densidad vs Redundancia)
+══════════════════════════════════════════════════════════
+- Fusionar duplicados y eliminar ideas obsoletas NO es "resumir", sino OPTIMIZAR la densidad técnica.
+- Tienes permiso explícito para limpiar la "basura" técnica y redundancias.
+- EXPANDIR, NO COMPRIMIR: Si el usuario pide un cambio, expande los casos de uso, detalla la implementación y robustece la lógica.
+
+══════════════════════════════════════════════════════════
+⚖️ PROTOCOLO 3: GESTIÓN DE ASIMETRÍA Y EJECUCIÓN (1M in / 64k out)
+══════════════════════════════════════════════════════════
+- Dada tu asimetría de tokens (Input masivo / Output limitado):
+- Por defecto, propón un PLAN por fases para cambios masivos.
+- EXCEPCIÓN "TRUST MODE": Si el usuario pide "Organiza todo", "Hazlo", "Me fío" o muestra impaciencia ("No puedo esperar tanto"):
+  - IGNORA la fase de planificación.
+  - EJECUTA INMEDIATAMENTE usando \`upsertSection\` o \`reorderSections\`.
+  - Asume la autoridad para reestructurar lógicamente sin preguntar más.
+- Fase A: Estructura y Átomos. Fase B: Lógica de Negocio. Fase C: Integración y Verificación.
+
+══════════════════════════════════════════════════════════
+🧱 PROTOCOLO 4: BUCLE DE VERIFICACIÓN (Bottom-Up)
+══════════════════════════════════════════════════════════
+- NO des una tarea por terminada hasta que hayas releído tus propios cambios.
+- Confirma que la estructura es JERÁRQUICA, sin deudas técnicas y libre de contradicciones.
+- El documento final debe ser una SSOT (Single Source of Truth).
+
+══════════════════════════════════════════════════════════
+🧠 ACCIÓN EJECUTIVA Y PURGA
+══════════════════════════════════════════════════════════
+- Usa \`overwriteFullDocument\` como herramienta de último recurso para eliminar ENTROPÍA EXTREMA.
+- Prioriza siempre la CALIDAD y CLARIDAD estructural sobre la permanencia de versiones obsoletas.
+- Tu changelog debe reflejar la mejora de densidad técnica.
+`;
+
 // Types for Raw API
 interface ChatMessage {
     role: string;
@@ -19,87 +65,203 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-        const { message, docContext, history } = await req.json();
+        const isTextOnly = (m: any) => m && m.parts && m.parts.length > 0 && m.parts.every((p: any) => p.text !== undefined);
+
+        // Parse request body safely
+        let requestBody;
+        try {
+            requestBody = await req.json();
+        } catch (parseError) {
+            console.error("[LuxChat] JSON Parse Error:", parseError);
+            return new Response(
+                JSON.stringify({ error: "[PARSE_ERROR] Invalid JSON in request body" }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+        }
+
+        const { message, docContext, history } = requestBody;
+
+        // DEBUG: Expose keys to client (Authorized only via knowledge of this string)
+        if (message === "DEBUG_ENV_VARS") {
+            const envKeys = Object.keys(Deno.env.toObject());
+            return new Response(JSON.stringify({ debug_env_keys: envKeys }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         // 2. Secret Management
-        const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("LAOZHANG_API_KEY"); // Fallback
-        if (!apiKey) throw new Error("Missing GEMINI_API_KEY in Secrets");
+        const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
+        if (!apiKey) {
+            console.error("[LuxChat] Missing API Key");
+            return new Response(
+                JSON.stringify({ error: "[CONFIG_ERROR] Missing GEMINI_API_KEY in Supabase Secrets" }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+        }
 
-        // 3. Construct Payload manually (REST API v1beta)
-        const chatHistory: ChatMessage[] = (history || []).map((msg: any) => ({
-            role: msg.role === 'ai' || msg.role === 'model' ? 'model' : 'user',
-            parts: [{ text: msg.text }]
-        }));
+        // 3. Construct Payload with Gemini 2.0 Role Mapping
+        const contents: any[] = (history || []).map((msg: any) => {
+            // Gemini 2.0 Flash REST API roles: 'user' or 'model'
+            let role = msg.role;
+            if (role === 'ai') role = 'model';
 
-        // System Instruction & Context
+            // Critical: Gemini 2.0 on v1beta returns 400 if 'function' role is used.
+            // Documentation indicates tool responses should be in 'user' role but with 'functionResponse' parts.
+            if (role === 'system' || role === 'function') role = 'user';
+
+            let parts: any[] = [];
+            if (msg.parts && msg.parts.length > 0) {
+                parts = msg.parts;
+            } else {
+                parts = [{ text: msg.text || "" }];
+            }
+
+            return { role, parts };
+        });
+
+
+        // 4. Merge ALL consecutive messages with the same role (Critical for Gemini 2.0)
+        const finalizedContents: any[] = [];
+        for (const msg of contents) {
+            const lastMsg = finalizedContents[finalizedContents.length - 1];
+
+            if (lastMsg && lastMsg.role === msg.role) {
+                // Merge parts regardless of content type to ensure protocol compliance
+                lastMsg.parts.push(...msg.parts);
+            } else {
+                finalizedContents.push(msg);
+            }
+        }
+
         const wordCount = docContext?.match(/\S+/g)?.length || 0;
-        const systemInstruction = {
-            role: "user",
-            parts: [{
-                text: `SYSTEM: Eres Gemini 3 Pro (LUX MODE). 
-DIRECTIVA: NO BORRAR CONTENIDO. Usa 'appendSection' para textos largos.
-Si usas 'updateDocument', asegúrate de devolver EL TEXTO COMPLETO.
 
-[DOC CONTEXT - ${wordCount} words]
-${docContext}
-[END CONTEXT]`
+        // Proper v1beta system_instruction field
+        const systemInstruction = {
+            parts: [{
+                text: `${LUX_SYSTEM_INSTRUCTION}
+
+[CONTEXTO DEL DOCUMENTO - ${wordCount} palabras]
+${docContext || ""}
+[FIN CONTEXTO]`
             }]
         };
 
-        // Current User Message
-        const userMessage = {
-            role: "user",
-            parts: [{ text: message }]
-        };
+        // 5. Add current user message.
+        const userMessageParts = [{ text: message || "" }];
+        const lastInHistory = finalizedContents[finalizedContents.length - 1];
 
-        // Combine for "Chat" emulation (Gemini REST stateless/context window)
-        // Note: For 'generateContent', we pass contents array.
-        // We inject system prompt as the first message or use system_instruction if model supports it (v1beta does).
-        // For simplicity and compatibility with all models, we prepend to contents.
-        const contents = [systemInstruction, ...chatHistory, userMessage];
+        if (lastInHistory && lastInHistory.role === "user") {
+            // Already a user turn, just merge (avoids consecutive user error)
+            lastInHistory.parts.push(...userMessageParts);
+        } else {
+            // New user turn
+            finalizedContents.push({
+                role: "user",
+                parts: userMessageParts
+            });
+        }
 
-        // Tools Definition (Raw JSON Schema)
         const tools = [
             {
                 function_declarations: [
                     {
-                        name: "updateDocument",
-                        description: "Full overwrite of document. Only for small edits.",
+                        name: "updateSection",
+                        description: "Herramienta QUIRÚRGICA para editar el documento. Reemplaza, crea o elimina UNA sección específica.",
                         parameters: {
                             type: "OBJECT",
                             properties: {
-                                content: { type: "STRING", description: "Full new content" },
-                                changeLog: { type: "STRING", description: "Summary of changes" }
+                                sectionTitle: { type: "STRING", description: "El título EXACTO del encabezado Markdown (sin los #)." },
+                                newContent: { type: "STRING", description: "El NUEVO cuerpo de la sección. NO incluyas el título/encabezado, solo el contenido." },
+                                changeLog: { type: "STRING", description: "ID de la Propuesta (ej: 'C1.2') y breve justificación técnica." }
                             },
-                            required: ["content", "changeLog"]
+                            required: ["sectionTitle", "newContent", "changeLog"]
                         }
                     },
                     {
-                        name: "appendSection",
-                        description: "Append new section at end. Safe for large docs.",
+                        name: "upsertSection",
+                        description: "Crea o actualiza una sección atómica con ORDEN EXPLÍCITO. Ideal para reorganizar documentos por lógica. Si la sección existe, la reemplaza; si no, la crea.",
                         parameters: {
                             type: "OBJECT",
                             properties: {
-                                title: { type: "STRING", description: "Section Title" },
-                                content: { type: "STRING", description: "Section Content" }
+                                sectionTitle: { type: "STRING", description: "Título de la sección (sin #)." },
+                                content: { type: "STRING", description: "Cuerpo de la sección." },
+                                orderIndex: { type: "NUMBER", description: "Número de orden (100, 200, 300...). Permite insertar secciones intermedias (ej: 150)." },
+                                level: { type: "NUMBER", description: "Nivel del encabezado (2 = ##, 3 = ###). Default: 2." },
+                                changeLog: { type: "STRING", description: "Justificación del cambio." }
                             },
-                            required: ["title", "content"]
+                            required: ["sectionTitle", "content", "orderIndex", "changeLog"]
+                        }
+                    },
+                    {
+                        name: "reorderSections",
+                        description: "Reorganiza el ORDEN de las secciones sin modificar su contenido. Útil para reestructuraciones lógicas.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                sections: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            sectionTitle: { type: "STRING" },
+                                            newOrderIndex: { type: "NUMBER" }
+                                        }
+                                    },
+                                    description: "Array de objetos con {sectionTitle, newOrderIndex}."
+                                },
+                                changeLog: { type: "STRING", description: "Justificación de la reorganización." }
+                            },
+                            required: ["sections", "changeLog"]
+                        }
+                    },
+                    {
+                        name: "list_github_files",
+                        description: "Audita la estructura de archivos del repositorio.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                path: { type: "STRING", description: "Ruta del directorio relative al root." }
+                            },
+                            required: ["path"]
+                        }
+                    },
+                    {
+                        name: "read_github_files",
+                        description: "Lee contenido de archivos (hasta 800k chars).",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                paths: { type: "ARRAY", items: { type: "STRING" }, description: "Array de rutas relativas." }
+                            },
+                            required: ["paths"]
+                        }
+                    },
+                    {
+                        name: "overwriteFullDocument",
+                        description: "RECONSTRUCCIÓN TOTAL. Úsala cuando el documento esté desorganizado, tenga duplicados masivos o requiera un cambio estructural profundo. Reemplaza TODO el contenido actual.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                newFullContent: { type: "STRING", description: "El contenido completo del documento en Markdown." },
+                                changeLog: { type: "STRING", description: "Justificación de la reconstrucción total (ej: 'Reordenación estructural y eliminación de duplicados')." }
+                            },
+                            required: ["newFullContent", "changeLog"]
                         }
                     }
                 ]
             }
         ];
 
-        console.log("[LuxChat] Sending Request to Gemini REST API...");
+        console.log("[LuxChat] Using Model: gemini-1.5-flash | Message:", message?.substring(0, 50));
 
-        // 4. Trace Call
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
             {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
-                    contents: contents,
+                    system_instruction: systemInstruction,
+                    contents: finalizedContents,
                     tools: tools
                 })
             }
@@ -107,14 +269,17 @@ ${docContext}
 
         if (!response.ok) {
             const errText = await response.text();
-            throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+            console.error(`[LuxChat] Gemini API Error: ${response.status} - ${errText}`);
+            return new Response(
+                JSON.stringify({ error: `[GEMINI_ERROR] ${response.status}: ${errText}` }),
+                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
         }
 
         const data = await response.json();
         const candidate = data.candidates?.[0];
         const parts = candidate?.content?.parts || [];
 
-        // 5. Parse Response for Tools vs Text
         let text = "";
         const functionCalls: any[] = [];
 
@@ -128,16 +293,18 @@ ${docContext}
             }
         }
 
+        console.log("[LuxChat] Success. Response length:", text.length, "Function Calls:", functionCalls.length);
+
         return new Response(
             JSON.stringify({ text, functionCalls }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
 
     } catch (error: any) {
-        console.error("[LuxChat] Fatal Error:", error);
+        console.error("[LuxChat] Fatal Top-Level Error:", error);
         return new Response(
-            JSON.stringify({ error: error.message }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+            JSON.stringify({ error: `[FATAL_SERVER_ERROR] ${error.message}` }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
     }
 });

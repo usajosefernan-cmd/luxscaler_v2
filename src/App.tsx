@@ -1,10 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import posthog from 'posthog-js';
+// import posthog from 'posthog-js';
 
 // Initialize PostHog (Analytics)
-posthog.init('phc_PLACEHOLDER_KEY', { api_host: 'https://us.i.posthog.com' });
+// posthog.init('phc_PLACEHOLDER_KEY', { api_host: 'https://us.i.posthog.com' });
 import { Navigation } from './components/Navigation';
 import { MobileCameraView } from './components/mobile/MobileCameraView';
 import { usePlatform } from './hooks/usePlatform';
@@ -14,6 +14,7 @@ import { ArchivesDashboard } from './components/ArchivesDashboard';
 import { AuthModal } from './components/AuthModal';
 import { AccessCodeModal } from './components/AccessCodeModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { LuxCanvasPage } from './pages/LuxCanvasPage';
 import { ProductShowcase } from './components/ProductShowcase';
 import { PHOTOSCALER_EXAMPLES, STYLESCALER_EXAMPLES, LIGHTSCALER_EXAMPLES, UPSCALER_EXAMPLES } from './constants/showcaseData';
 import { ComparisonSlider } from './components/ComparisonSlider';
@@ -72,25 +73,30 @@ type GridItem = ArchivedVariation | { id: string; error: boolean; style_id: stri
 // ========================
 interface ProtectedAdminRouteProps {
     userProfile: UserProfile | null;
+    isLoading: boolean;
     children: React.ReactNode;
     onOpenAuth: () => void;
 }
 
-const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ userProfile, children, onOpenAuth }) => {
-    // Si no hay usuario logueado, redirigir a home y mostrar modal de auth
+const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ userProfile, isLoading, children, onOpenAuth }) => {
+    // 0. Si está cargando, mostrar nada o un spinner (bloquear redirección)
+    if (isLoading) {
+        return <div className="h-screen w-full flex items-center justify-center bg-void-black text-lumen-gold font-mono text-xs">VERIFICANDO CREDENCIALES NIVEL 5...</div>;
+    }
+
+    // 1. Si no hay usuario logueado, redirigir a home y mostrar modal de auth
     if (!userProfile) {
-        // En un useEffect real deberías llamar onOpenAuth, pero esto es para bloquear la navegación
         console.warn('[Security] Acceso denegado a /admin: No hay sesión activa');
         return <Navigate to="/" replace />;
     }
 
-    // Si el usuario no es admin, redirigir a home
+    // 2. Si el usuario no es admin, redirigir a home
     if (!userProfile.is_admin) {
         console.warn('[Security] Acceso denegado a /admin: Usuario no es administrador');
         return <Navigate to="/" replace />;
     }
 
-    // Usuario es admin, renderizar el contenido
+    // 3. Usuario es admin, renderizar el contenido
     return <>{children}</>;
 };
 
@@ -102,6 +108,7 @@ const App: React.FC = () => {
 
     // Auth & Access State
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [isAuthLoading, setIsAuthLoading] = useState(true); // 🔄 NEW: Loading state
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
     const [accessGranted, setAccessGranted] = useState(false);
@@ -167,9 +174,15 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const profile = await getCurrentUserProfile();
-            setUserProfile(profile);
-            if (profile) setAccessGranted(true);
+            try {
+                const profile = await getCurrentUserProfile();
+                setUserProfile(profile);
+                if (profile) setAccessGranted(true);
+            } catch (e) {
+                console.error("Auth check failed:", e);
+            } finally {
+                setIsAuthLoading(false); // ✅ Auth check done
+            }
         };
         checkAuth();
 
@@ -833,23 +846,25 @@ const App: React.FC = () => {
     // 2. MAIN APPLICATION LAYOUT (Standard Nav + Views)
     return (
         <div className="min-h-screen bg-void-black text-chalk-white font-sans selection:bg-lumen-gold/30 selection:text-lumen-gold flex flex-col">
-            <Navigation
-                currentView={activeView}
-                onNavigateToStudio={navigateToHome}
-                onUploadProject={handleStartClick}
-                onNavigateToArchive={() => navigate('/archives')}
-                onLogin={() => setIsAuthModalOpen(true)}
-                onSignOut={handleSignOut}
-                onAdminDashboard={() => navigate('/admin')}
-                onNavigateToEngine1={() => navigate('/forensic')}
-                onNavigateToEngine2={() => navigate('/art')}
-                onNavigateToEngine3={() => navigate('/studio-light')}
-                onNavigateToEngine4={() => navigate('/upscale')}
-                onNavigateToPricing={() => navigate('/pricing')}
-                userProfile={userProfile}
-                showInstallBtn={showInstallBtn}
-                onInstallApp={handleInstallClick}
-            />
+            {!location.pathname.includes('/admin/canvas') && (
+                <Navigation
+                    currentView={activeView}
+                    onNavigateToStudio={navigateToHome}
+                    onUploadProject={handleStartClick}
+                    onNavigateToArchive={() => navigate('/archives')}
+                    onLogin={() => setIsAuthModalOpen(true)}
+                    onSignOut={handleSignOut}
+                    onAdminDashboard={() => navigate('/admin')}
+                    onNavigateToEngine1={() => navigate('/forensic')}
+                    onNavigateToEngine2={() => navigate('/art')}
+                    onNavigateToEngine3={() => navigate('/studio-light')}
+                    onNavigateToEngine4={() => navigate('/upscale')}
+                    onNavigateToPricing={() => navigate('/pricing')}
+                    userProfile={userProfile}
+                    showInstallBtn={showInstallBtn}
+                    onInstallApp={handleInstallClick}
+                />
+            )}
 
             {/* GLOBAL UPLOAD INPUT - Always Mounted */}
             <input
@@ -918,9 +933,19 @@ const App: React.FC = () => {
                 <Route path="/admin" element={
                     <ProtectedAdminRoute
                         userProfile={userProfile}
+                        isLoading={isAuthLoading}
                         onOpenAuth={() => setIsAuthModalOpen(true)}
                     >
                         <AdminDashboard onBack={navigateToHome} />
+                    </ProtectedAdminRoute>
+                } />
+                <Route path="/admin/canvas" element={
+                    <ProtectedAdminRoute
+                        userProfile={userProfile}
+                        isLoading={isAuthLoading}
+                        onOpenAuth={() => setIsAuthModalOpen(true)}
+                    >
+                        <LuxCanvasPage />
                     </ProtectedAdminRoute>
                 } />
                 <Route path="/pricing" element={<PricingPage onBack={navigateToHome} />} />
@@ -963,7 +988,7 @@ const App: React.FC = () => {
             />
 
             {/* GLOBAL FOOTER - Shared but Hidden in Studio/Result */}
-            {(!location.pathname.includes('/result') && !inputImageUrl) && (
+            {(!location.pathname.includes('/result') && !location.pathname.includes('/admin/canvas') && !inputImageUrl) && (
                 <GlobalFooter onNavigate={(view) => {
                     switch (view) {
                         case 'HOME': navigate('/'); break;

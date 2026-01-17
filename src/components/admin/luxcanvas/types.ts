@@ -13,6 +13,7 @@ export interface Message {
   timestamp: string;
   stats?: MessageStats;
   isThinking?: boolean;
+  parts?: any[];
 }
 
 export interface DocState {

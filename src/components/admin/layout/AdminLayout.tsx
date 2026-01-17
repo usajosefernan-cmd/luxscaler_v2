@@ -83,7 +83,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentTab, onTabChang
                 />
 
                 {/* Content Area - Scrollable */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-black/50 p-4 lg:p-6 custom-scrollbar relative">
+                {/* [MOD LUXCANVAS] Disable global scroll for LuxCanvas to fix chat jump issues */}
+                <main className={`flex-1 bg-black/50 p-4 lg:p-6 custom-scrollbar relative ${currentTab === 'LUXCANVAS' ? 'overflow-hidden p-0 lg:p-0' : 'overflow-x-hidden overflow-y-auto'}`}>
 
                     {/* Optional: Background ambient glow */}
                     <div className="fixed top-0 left-0 w-full h-[500px] bg-lumen-gold/5 rounded-full blur-[150px] pointer-events-none -z-10 opacity-30 mix-blend-screen" />

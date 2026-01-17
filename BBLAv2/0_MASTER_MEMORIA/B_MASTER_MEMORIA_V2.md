@@ -4,6 +4,22 @@
 > **ÚLTIMA ACTUALIZACIÓN:** 2026-01-13 (Neo Reset)
 > **ESTADO:** LuxScaler v2.0 (Clean Architecture)
 
+## 🚨 CONSTANTES TÉCNICAS (NO TOCAR / NO OLVIDAR)
+
+Estas verdades han sido descubiertas tras múltiples fallos. **No las cambies sin probar primero.**
+
+1. **MODELO DE CHAT:** `gemini-1.5-flash`.
+    * *Por qué:* `gemini-2.0-flash-exp` y `gemini-3` causan **Error 500 / Offline** (inestables o sin permisos en la Key actual).
+    * *Acción:* Si ves `2.0` en `lux-chat/index.ts` o `B_PROTO_GLOBAL.md`, **CÁMBIALO A 1.5**.
+
+2. **PROTOCOLO EDGE (Gemini payload):**
+    * *Estuctura:* Requiere campo `system_instruction` explícito en el JSON.
+    * *Prohibido:* Inyectar instrucciones como "falso mensaje de usuario" (Google v1beta lo rechaza o ignora).
+
+3. **PERSISTENCIA DEL CHAT:**
+    * *Método:* `localStorage` (Cliente).
+    * *Estado:* Implementado. No depende de base de datos. Si el usuario refresca, recupera del navegador.
+
 ## 1. VISIÓN DEL PROYECTO
 
 LuxScaler es una plataforma de "Engine Óptico Forense" que utiliza IA para escalar, restaurar y reimaginar imágenes con una fidelidad de 8K/16K.
@@ -154,7 +170,6 @@ La estructura se ha aplanado para facilitar el mantenimiento:
 
 **Next:** Continuar con la **Fase 6.3 (GitHub Sync)**. Integrar el botón "PUSH" en la UI y conectar con la Edge Function `lux-git-sync` (que deberá ser desplegada/verificada).
 
-
 ### 📝 SESIÓN: 2026-01-15 14:26
 
 **Agente:** Antigravity
@@ -172,8 +187,6 @@ La estructura se ha aplanado para facilitar el mantenimiento:
 
 **Next:** Fase 6.3 - GitHub Sync (UI & Edge Function).
 
-
-
 ### 📝 SESIÓN: 2026-01-15 14:51
 
 **Agente:** Antigravity
@@ -189,3 +202,43 @@ La estructura se ha aplanado para facilitar el mantenimiento:
 
 **Next:** Fase 6.3 - GitHub Sync (Integración UI con botón PUSH).
 
+### 📝 SESIÓN: 2026-01-15 19:00
+
+**Agente:** Antigravity (Deepmind)
+**Logros:**
+
+* **Resolución Error 401 Lux Chat (Root Cause):** Se identificó y probó forensemente que la API Key de Google tiene restricción de IP.
+  * *Prueba 1:* La Key funciona en local (Powershell) pero falla en Supabase.
+  * *Prueba 2:* El entorno de Supabase NO tiene credenciales de Service Account (`DEBUG_ENV_VARS` confirmó ausencia de `GOOGLE_APPLICATION_CREDENTIALS`).
+  * *Conclusión:* Google bloquea las IPs dinámicas de Supabase. Solución: Quitar restricción de IP en Cloud Console.
+* **Documentación Blindada (Map Edition):** Se reescribió `B_PROTO_GLOBAL.md` (v3.0) para incluir un Mapa del Ecosistema completo (Quién es quién, Dónde están las Keys, Cómo se actualiza).
+* **Optimización de Sistema (Anti-Zombie):** Se añadió la opción "Clean Zombie Processes" en `fast_sync.ps1` para matar procesos `powershell` y `node` colgados que ralentizaban el PC del usuario.
+* **Consolidación Protocolo No-Docker:** Se fusionó la directiva "No-Docker" dentro de `B_PROTO_SUPABASE_MCP.md` como estándar único.
+
+**Cambios Técnicos:**
+
+* **[MOD] `supabase/functions/lux-chat/index.ts`:** Restaurado a funcionalidad completa con Auth vía Header `x-goog-api-key`.
+* **[MOD] `BBLAv2/3_PROTOCOLS/B_PROTO_GLOBAL.md`:** Actualización masiva v3.0 con Mapa de Ecosistema.
+* **[MOD] `scripts/fast_sync.ps1`:** Añadida función `Run-Cleanup` (Opción 7) para matar zombies.
+* **[NEW] `scripts/mcp/verify_image_gen.ps1`:** Script de validación de capacidades de imagen.
+
+**Next:**
+
+### 📝 SESIÓN: 2026-01-16 10:00
+
+**Agente:** Antigravity
+**Logros:**
+
+* **Chat Persistente (LuxCanvas):** Implementado sistema de guardado automático (`auto-save`) y recuperación del historial de chat vinculado a cada documento.
+* **Layout Responsive (Full View):** Corregido el desbordamiento en `AdminLuxCanvas`. Añadido soporte `min-h-0` para garantizar que los paneles de Chat y Editor respeten el viewport (100dvh) en todos los navegadores.
+* **UI Premium (Editor):** Rediseño total de la visualización de código con estilo "Mac Terminal" (Dark Mode, Traffic Lights) y mejor tipografía para alertas y listas.
+* **Navegación Admin:** Integrado botón "Volver al Dashboard" en la librería de proyectos.
+
+**Cambios Técnicos:**
+
+* **[MOD] `src/components/admin/luxcanvas/AdminLuxCanvas.tsx`:** Lógica de `handleLoadDocument` para `chat_history`. Ajustes Flexbox `min-h-0`.
+* **[MOD] `src/components/admin/luxcanvas/components/EditorPanel.tsx`:** Nuevo `SectionContentRenderer` con estilos avanzados. Props `min-w-0` para layout.
+* **[MOD] `src/components/admin/luxcanvas/components/ChatPanel.tsx`:** Ajuste de contenedor `h-full min-h-0`.
+* **[NEW] `supabase/migrations/20260116120000_add_chat_history.sql`:** Columna JSONB para persistencia.
+
+**Next:** Validar despliegue y funcionamiento de `mermaid` graphs en visualización.
