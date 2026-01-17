@@ -28,3 +28,54 @@ export interface StreamUpdate {
     args: any;
   };
 }
+
+// =============================================================================
+// PATCH SYSTEM TYPES - Smart Diff & Merge for Antigravity Strategy
+// =============================================================================
+
+export type PatchOperation = 'REPLACE' | 'INSERT_AFTER' | 'INSERT_BEFORE' | 'APPEND';
+
+export interface Patch {
+  section_id: string;
+  operation: PatchOperation;
+  before_anchor?: string;
+  new_content: string;
+}
+
+export interface PatchResult {
+  success: boolean;
+  content: string;
+  error?: string;
+  patchId: string;
+}
+
+export interface DocumentSection {
+  id: string;
+  title: string;
+  level: number;
+  startLine: number;
+  endLine: number;
+  content: string;
+  children: DocumentSection[];
+}
+
+export interface DocumentTree {
+  sections: DocumentSection[];
+  totalLines: number;
+  hash: string;
+}
+
+export interface PatchResponse {
+  patches: Patch[];
+  global_analysis: string;
+  affected_dependencies: string[];
+}
+
+export interface DocStateExtended extends DocState {
+  version: number;
+  changelog: Array<{
+    patches: string[];
+    analysis: string;
+    timestamp: string;
+  }>;
+}
