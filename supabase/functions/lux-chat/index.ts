@@ -27,7 +27,7 @@ Tu misión es gestionar la ENTROPÍA del contexto y optimizar la DENSIDAD de inf
 - EXPANDIR, NO COMPRIMIR: Si el usuario pide un cambio, expande los casos de uso, detalla la implementación y robustece la lógica.
 
 ══════════════════════════════════════════════════════════
-⚖️ PROTOCOLO 3: GESTIÓN DE ASIMETRÍA Y EJECUCIÓN (1M in / 64k out)
+⚖️ PROTOCOLO 3: GESTIÓN DE ASIMETRÍA Y EJECUCIÓN (1M in / 8k out)
 ══════════════════════════════════════════════════════════
 - Dada tu asimetría de tokens (Input masivo / Output limitado):
 - Por defecto, propón un PLAN por fases para cambios masivos.
@@ -36,6 +36,11 @@ Tu misión es gestionar la ENTROPÍA del contexto y optimizar la DENSIDAD de inf
   - EJECUTA INMEDIATAMENTE usando \`upsertSection\` o \`reorderSections\`.
   - Asume la autoridad para reestructurar lógicamente sin preguntar más.
 - Fase A: Estructura y Átomos. Fase B: Lógica de Negocio. Fase C: Integración y Verificación.
+- ESTRATEGIA SCAN→PATCH para documentos >50k chars:
+  1. SCAN: Usa tu ventana de 1M tokens para ANALIZAR todo el documento.
+  2. IDENTIFY: Marca mentalmente las secciones que necesitan cambios.
+  3. PATCH: Usa \`scanAndPatch\` con patches quirúrgicos (solo secciones afectadas).
+  4. NUNCA reescribas el documento completo si puedes aplicar patches.
 
 ══════════════════════════════════════════════════════════
 🧱 PROTOCOLO 4: BUCLE DE VERIFICACIÓN (Bottom-Up)
@@ -234,6 +239,30 @@ ${docContext || ""}
                             required: ["paths"]
                         }
                     },
+                                    {
+                    name: "scanAndPatch",
+                    description: "ESTRATEGIA SCAN→PATCH para documentos grandes (>50k chars). Fase 1 (SCAN): Analiza TODO el documento con 1M tokens de input. Fase 2 (PATCH): Devuelve SOLO las coordenadas y contenido de las secciones a modificar. NUNCA reescritura completa.",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            patches: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        sectionTitle: { type: "STRING", description: "Título exacto de la sección a patchear." },
+                                        operation: { type: "STRING", description: "REPLACE | INSERT_AFTER | INSERT_BEFORE | DELETE" },
+                                        newContent: { type: "STRING", description: "Nuevo contenido para la sección (solo para REPLACE/INSERT)." }
+                                    }
+                                },
+                                description: "Array de patches quirúrgicos a aplicar."
+                            },
+                            scanSummary: { type: "STRING", description: "Resumen del análisis global del documento." },
+                            changelog: { type: "STRING", description: "Justificación de cada patch." }
+                        },
+                        required: ["patches", "changelog"]
+                    }
+                },
                     {
                         name: "overwriteFullDocument",
                         description: "RECONSTRUCCIÓN TOTAL. Úsala cuando el documento esté desorganizado, tenga duplicados masivos o requiera un cambio estructural profundo. Reemplaza TODO el contenido actual.",
