@@ -183,6 +183,18 @@ export class GeminiService {
               });
               this.addToolResponse('reorderSections', { status: 'success', count: call.args.sections?.length || 0 });
             }
+                          else if (call.name === 'scanAndPatch') {
+              // SCAN→PATCH: Estrategia para documentos grandes
+              const patches = call.args.patches || [];
+              for (const patch of patches) {
+                onToolCall('UPDATE_SECTION', {
+                  title: patch.sectionTitle,
+                  content: patch.newContent,
+                  changeLog: `[PATCH ${patch.operation}] ${call.args.changelog}`
+                });
+              }
+              this.addToolResponse('scanAndPatch', { status: 'success', patchCount: patches.length });
+            }
             else if (call.name === 'overwriteFullDocument') {
               onToolCall('UPDATE_FULL', { content: call.args.newFullContent, changeLog: call.args.changeLog });
               this.addToolResponse('overwriteFullDocument', { status: 'success' });
