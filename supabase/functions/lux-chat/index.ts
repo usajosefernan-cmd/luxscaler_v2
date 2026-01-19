@@ -53,7 +53,7 @@ Tu misión es gestionar la ENTROPÍA del contexto y optimizar la DENSIDAD de inf
 - NUNCA respondas con SOLO texto cuando el usuario pida cambios.
 - Si pide Jerarquiza, Organiza, Mejora: USA las herramientas.
 - NO describas lo que harias, HAZLO con function calls.
-- REGLA: Sin herramientas = documento NO cambia.onfirma que la estructura es JERÁRQUICA, sin deudas técnicas y libre de contradicciones.
+- REGLA: Sin herramientas = documento NO cambia. Confirma que la estructura es JERÁRQUICA, sin deudas técnicas y libre de contradicciones.
 - El documento final debe ser una SSOT (Single Source of Truth).
 
 ══════════════════════════════════════════════════════════
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const { message, docContext, history } = requestBody;
+        const { message, docContext, history, mode } = requestBody;
 
         // DEBUG: Expose keys to client (Authorized only via knowledge of this string)
         if (message === "DEBUG_ENV_VARS") {
@@ -156,8 +156,26 @@ ${docContext || ""}
             }]
         };
 
-        // 5. Add current user message.
-        const userMessageParts = [{ text: message || "" }];
+        // 5. Add current user message with MODE ENFORCEMENT
+        let finalMessage = message || "";
+
+        if (mode === 'agent') {
+            finalMessage += `
+        
+[⚠️ MODO AGENTE ACTIVO - INSTRUCCIÓN CRÍTICA]
+Tu objetivo NO es conversar. Tu objetivo es EDITAR y MEJORAR el documento.
+DEBES usar las herramientas (updateSection, upsertSection, etc.) para aplicar cambios.
+Si respondes solo con texto, habrás fallado.
+ACCIONA AHORA.`;
+        } else if (mode === 'chat') {
+            finalMessage += `
+        
+[💬 MODO CHAT ACTIVO]
+Responde las dudas del usuario. NO uses herramientas de edición.
+Solo da explicaciones, consejos o analiza el texto.`;
+        }
+
+        const userMessageParts = [{ text: finalMessage }];
         const lastInHistory = finalizedContents[finalizedContents.length - 1];
 
         if (lastInHistory && lastInHistory.role === "user") {
@@ -246,30 +264,30 @@ ${docContext || ""}
                             required: ["paths"]
                         }
                     },
-                                    {
-                    name: "scanAndPatch",
-                    description: "ESTRATEGIA SCAN→PATCH para documentos grandes (>50k chars). Fase 1 (SCAN): Analiza TODO el documento con 1M tokens de input. Fase 2 (PATCH): Devuelve SOLO las coordenadas y contenido de las secciones a modificar. NUNCA reescritura completa.",
-                    parameters: {
-                        type: "OBJECT",
-                        properties: {
-                            patches: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        sectionTitle: { type: "STRING", description: "Título exacto de la sección a patchear." },
-                                        operation: { type: "STRING", description: "REPLACE | INSERT_AFTER | INSERT_BEFORE | DELETE" },
-                                        newContent: { type: "STRING", description: "Nuevo contenido para la sección (solo para REPLACE/INSERT)." }
-                                    }
+                    {
+                        name: "scanAndPatch",
+                        description: "ESTRATEGIA SCAN→PATCH para documentos grandes (>50k chars). Fase 1 (SCAN): Analiza TODO el documento con 1M tokens de input. Fase 2 (PATCH): Devuelve SOLO las coordenadas y contenido de las secciones a modificar. NUNCA reescritura completa.",
+                        parameters: {
+                            type: "OBJECT",
+                            properties: {
+                                patches: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            sectionTitle: { type: "STRING", description: "Título exacto de la sección a patchear." },
+                                            operation: { type: "STRING", description: "REPLACE | INSERT_AFTER | INSERT_BEFORE | DELETE" },
+                                            newContent: { type: "STRING", description: "Nuevo contenido para la sección (solo para REPLACE/INSERT)." }
+                                        }
+                                    },
+                                    description: "Array de patches quirúrgicos a aplicar."
                                 },
-                                description: "Array de patches quirúrgicos a aplicar."
+                                scanSummary: { type: "STRING", description: "Resumen del análisis global del documento." },
+                                changelog: { type: "STRING", description: "Justificación de cada patch." }
                             },
-                            scanSummary: { type: "STRING", description: "Resumen del análisis global del documento." },
-                            changelog: { type: "STRING", description: "Justificación de cada patch." }
-                        },
-                        required: ["patches", "changelog"]
-                    }
-                },
+                            required: ["patches", "changelog"]
+                        }
+                    },
                     {
                         name: "overwriteFullDocument",
                         description: "RECONSTRUCCIÓN TOTAL. Úsala cuando el documento esté desorganizado, tenga duplicados masivos o requiera un cambio estructural profundo. Reemplaza TODO el contenido actual.",
@@ -286,7 +304,7 @@ ${docContext || ""}
             }
         ];
 
-        console.log("[LuxChat] Using Model: gemini-1.5-flash | Message:", message?.substring(0, 50));
+        console.log("[LuxChat] Using Model: gemini-2.0-flash | Message:", message?.substring(0, 50));
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -295,52 +313,74 @@ ${docContext || ""}
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
+                const finalBody: any = {
                     system_instruction: systemInstruction,
                     contents: finalizedContents,
-                    tools: tools
-                })
-            }
-        );
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: 8192
+                    }
+                };
 
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error(`[LuxChat] Gemini API Error: ${response.status} - ${errText}`);
-            return new Response(
-                JSON.stringify({ error: `[GEMINI_ERROR] ${response.status}: ${errText}` }),
-                { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-            );
+                // 6. Tool Injection Logic (Dependent on Mode)
+                if(mode === 'agent') {
+                    finalBody.tools = tools;
+        // Optional: Force HIGH probability of tool use
+        // finalBody.tool_config = { function_calling_config: { mode: "AUTO" } }; 
+    }
+        // In 'chat' mode, we simply DO NOT send 'tools', making it impossible for the model to use them.
+
+        const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(finalBody)
         }
+    );
+}
+);
 
-        const data = await response.json();
-        const candidate = data.candidates?.[0];
-        const parts = candidate?.content?.parts || [];
+if (!response.ok) {
+    const errText = await response.text();
+    console.error(`[LuxChat] Gemini API Error: ${response.status} - ${errText}`);
+    return new Response(
+        JSON.stringify({ error: `[GEMINI_ERROR] ${response.status}: ${errText}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+}
 
-        let text = "";
-        const functionCalls: any[] = [];
+const data = await response.json();
+const candidate = data.candidates?.[0];
+const parts = candidate?.content?.parts || [];
 
-        for (const part of parts) {
-            if (part.text) text += part.text;
-            if (part.functionCall) {
-                functionCalls.push({
-                    name: part.functionCall.name,
-                    args: part.functionCall.args
-                });
-            }
-        }
+let text = "";
+const functionCalls: any[] = [];
 
-        console.log("[LuxChat] Success. Response length:", text.length, "Function Calls:", functionCalls.length);
+for (const part of parts) {
+    if (part.text) text += part.text;
+    if (part.functionCall) {
+        functionCalls.push({
+            name: part.functionCall.name,
+            args: part.functionCall.args
+        });
+    }
+}
 
-        return new Response(
-            JSON.stringify({ text, functionCalls }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+console.log("[LuxChat] Success. Response length:", text.length, "Function Calls:", functionCalls.length);
+
+return new Response(
+    JSON.stringify({ text, functionCalls }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+);
 
     } catch (error: any) {
-        console.error("[LuxChat] Fatal Top-Level Error:", error);
-        return new Response(
-            JSON.stringify({ error: `[FATAL_SERVER_ERROR] ${error.message}` }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-        );
-    }
+    console.error("[LuxChat] Fatal Top-Level Error:", error);
+    return new Response(
+        JSON.stringify({ error: `[FATAL_SERVER_ERROR] ${error.message}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+}
 });

@@ -36,7 +36,7 @@ const INITIAL_MESSAGE: Message = {
 };
 
 import { ProjectLibrary } from './components/ProjectLibrary';
-import { Grid, RefreshCw, Zap } from 'lucide-react';
+import { Grid, RefreshCw, Zap, Bot } from 'lucide-react';
 
 interface AdminLuxCanvasProps {
   onBack?: () => void;
@@ -111,6 +111,10 @@ export const AdminLuxCanvas: React.FC<AdminLuxCanvasProps> = ({ onBack }) => {
   const [currentDocId, setCurrentDocId] = useState<string | null>(null);
   const [currentProject, setCurrentProject] = useState<any>(null); // To store repo info
 
+  // 🤖 AI MODE STATE
+  const [aiMode, setAiMode] = useState<'chat' | 'agent'>('agent');
+  const [autoApprove, setAutoApprove] = useState(false); // ⚡ AUTO-EXECUTE TOGGLE
+
   // 💡 NEW: Ref to track latest content without closure staleness issues in sync loops
   const docContentRef = React.useRef(INITIAL_DOC);
 
@@ -181,6 +185,16 @@ export const AdminLuxCanvas: React.FC<AdminLuxCanvasProps> = ({ onBack }) => {
     setCurrentProject(project);
     await handleLoadDocument(docId, title); // Use ID for loading
     setActiveView('editor');
+  };
+
+  const toggleAiMode = () => {
+    setAiMode(prev => prev === 'chat' ? 'agent' : 'chat');
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      role: 'system',
+      text: `🔄 Modo cambiado a: **${aiMode === 'chat' ? 'AGENTE (Herramientas Activas)' : 'CHAT (Solo Texto)'}**`,
+      timestamp: new Date().toLocaleTimeString()
+    }]);
   };
 
   const handlePushToGithub = async () => {
@@ -659,21 +673,28 @@ export const AdminLuxCanvas: React.FC<AdminLuxCanvasProps> = ({ onBack }) => {
     // Calculate simulated diff for risk assessment
     // (Simplification: We allow UPDATE_SECTION direct pass if needed, but for now block all for safety per user request)
 
-    setPendingAction({
-      id: Date.now(),
-      type: action,
-      data: data,
-      description,
-      diffStats: { words: 0, chars: 0, diffWords: 0 } // Todo: simulate logic
-    });
-
-    // Auto-scroll to approval card
+    // 🔍 LOGGING: Inform User Tool was Received
     setMessages(prev => [...prev, {
-      id: Date.now() + Math.random(),
+      id: Date.now(),
       role: 'system',
-      text: `✋ **CHECKPOINT**: La IA propone una acción. Requiere aprobación.`,
+      text: `🛠️ **Herramienta Detectada**: \`${action}\`\n_${description}_`,
       timestamp: new Date().toLocaleTimeString()
     }]);
+
+    if (autoApprove) {
+      // ⚡ AUTO-EXECUTE BYPASS
+      executeToolAction(action, data);
+    } else {
+      // 🛡️ MANUAL CHECKPOINT
+      setPendingAction({
+        id: Date.now(),
+        type: action,
+        data: data,
+        description,
+        diffStats: { words: 0, chars: 0, diffWords: 0 }
+      });
+      // Auto-scroll to approval card (implied by rendering)
+    }
 
   }, [currentDocId]);
 
@@ -715,7 +736,8 @@ export const AdminLuxCanvas: React.FC<AdminLuxCanvasProps> = ({ onBack }) => {
       const response = await geminiService.sendMessage(
         text,
         docContentRef.current,
-        handleToolUpdate
+        handleToolUpdate,
+        aiMode // Pass current mode
       );
 
       const newAiMsg: Message = {
@@ -817,7 +839,8 @@ COMIENZA EL ESCANEO AHORA.
         const response = await geminiService.sendMessage(
           currentTurn === 1 ? syncPrompt : `Continúa la revisión. Turno ${currentTurn}. ¿Hay más inconsistencias? Si las hay, usa updateSection para corregirlas. Si no hay más, di "SINCRONIZACIÓN COMPLETA".`,
           docContentRef.current, // 🛠️ FIXED: Use ref for up-to-date content
-          handleToolUpdate
+          handleToolUpdate,
+          'agent' // Force agent mode for Sync
         );
 
         addLog(`📨 Respuesta recibida (${response.text.length} chars)`);
@@ -924,6 +947,36 @@ COMIENZA EL ESCANEO AHORA.
             {isSyncing ? `SYNC T${syncTurn}...` : 'SYNC'}
           </span>
         </button>
+
+      </div>
+
+      {/* CENTER: AI MODE TOGGLE */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex bg-black/80 rounded-full p-1 border border-slate-700 shadow-xl backdrop-blur-md">
+        <button
+          onClick={() => setAiMode('chat')}
+          className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${aiMode === 'chat' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          CHAT
+        </button>
+        <button
+          onClick={() => setAiMode('agent')}
+          className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${aiMode === 'agent' ? 'bg-cyan-900/80 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)]' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Bot size={12} />
+          AGENT
+        </button>
+
+        <div className="w-[1px] h-4 bg-slate-700 mx-2"></div>
+
+        <label className="flex items-center gap-2 cursor-pointer group" title="Ejecutar cambios sin preguntar">
+          <div className={`w-3 h-3 rounded border flex items-center justify-center transition-colors ${autoApprove ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 group-hover:border-slate-300'}`}>
+            {autoApprove && <span className="text-[8px] text-black font-bold">✓</span>}
+          </div>
+          <span className={`text-[9px] font-bold ${autoApprove ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+            AUTO
+          </span>
+          <input type="checkbox" className="hidden" checked={autoApprove} onChange={() => setAutoApprove(!autoApprove)} />
+        </label>
       </div>
 
       {/* Left: Chat & Controls */}
@@ -1006,53 +1059,55 @@ COMIENZA EL ESCANEO AHORA.
       }
 
       {/* 🛡️ APPROVAL CARD (CHECKPOINT) */}
-      {pendingAction && (
-        <div className="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-amber-500/50 rounded-xl w-full max-w-lg shadow-2xl shadow-amber-900/20 overflow-hidden transform transition-all scale-100">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-amber-900/40 to-slate-900 p-4 border-b border-amber-500/30 flex items-center gap-3">
-              <div className="bg-amber-500/20 p-2 rounded-lg text-amber-500">
-                <div className="animate-pulse">✋</div>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-amber-100">Checkpoint de Seguridad</h3>
-                <p className="text-xs text-amber-400/80 uppercase tracking-wider">La IA requiere aprobación humana</p>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-4">
-              <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
-                <div className="text-xs text-slate-500 uppercase mb-1">Acción Propuesta</div>
-                <div className="text-white font-mono text-sm">{pendingAction.description}</div>
-              </div>
-
-              {pendingAction.type === 'UPDATE_FULL' && (
-                <div className="bg-red-900/20 p-3 rounded border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-                  ⚠️ <strong>ALERTA DESTRUCTIVA:</strong> Esta acción sobrescribirá todo el documento.
+      {
+        pendingAction && (
+          <div className="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-200">
+            <div className="bg-slate-900 border border-amber-500/50 rounded-xl w-full max-w-lg shadow-2xl shadow-amber-900/20 overflow-hidden transform transition-all scale-100">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-900/40 to-slate-900 p-4 border-b border-amber-500/30 flex items-center gap-3">
+                <div className="bg-amber-500/20 p-2 rounded-lg text-amber-500">
+                  <div className="animate-pulse">✋</div>
                 </div>
-              )}
-            </div>
+                <div>
+                  <h3 className="text-lg font-bold text-amber-100">Checkpoint de Seguridad</h3>
+                  <p className="text-xs text-amber-400/80 uppercase tracking-wider">La IA requiere aprobación humana</p>
+                </div>
+              </div>
 
-            {/* Actions */}
-            <div className="p-4 bg-slate-950/50 border-t border-slate-800 flex gap-3 justify-end">
-              <button
-                onClick={rejectAction}
-                className="px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-bold"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={approveAction}
-                className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white shadow-lg hover:shadow-amber-500/20 transition-all text-sm font-bold flex items-center gap-2"
-              >
-                <span>Aprobar Ejecución</span>
-                <span>→</span>
-              </button>
+              {/* Body */}
+              <div className="p-6 space-y-4">
+                <div className="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                  <div className="text-xs text-slate-500 uppercase mb-1">Acción Propuesta</div>
+                  <div className="text-white font-mono text-sm">{pendingAction.description}</div>
+                </div>
+
+                {pendingAction.type === 'UPDATE_FULL' && (
+                  <div className="bg-red-900/20 p-3 rounded border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+                    ⚠️ <strong>ALERTA DESTRUCTIVA:</strong> Esta acción sobrescribirá todo el documento.
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="p-4 bg-slate-950/50 border-t border-slate-800 flex gap-3 justify-end">
+                <button
+                  onClick={rejectAction}
+                  className="px-4 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={approveAction}
+                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white shadow-lg hover:shadow-amber-500/20 transition-all text-sm font-bold flex items-center gap-2"
+                >
+                  <span>Aprobar Ejecución</span>
+                  <span>→</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* HISTORY MODAL (Simple Overlay) */}
       {

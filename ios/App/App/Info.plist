@@ -45,5 +45,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>LuxScaler necesita acceso a la cámara para capturar fotos y procesarlas con IA.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>LuxScaler necesita acceso a tu galería para guardar las fotos procesadas.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>LuxScaler necesita permiso para guardar fotos en tu galería.</string>
 </dict>
 </plist>

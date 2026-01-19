@@ -93,7 +93,8 @@ export class GeminiService {
   async sendMessage(
     message: string,
     currentDocContext: string,
-    onToolCall: (action: string, data: any) => void
+    onToolCall: (action: string, data: any) => void,
+    mode: 'chat' | 'agent' = 'agent' // Default to agent
   ): Promise<{ text: string; stats: any, parts: any[] }> {
 
     const startTime = Date.now();
@@ -113,7 +114,7 @@ export class GeminiService {
     try {
       while (recursionCount < maxRecursion) {
         recursionCount++;
-        console.log(`🤖 [Turno ${recursionCount}] Consultando Gemini...`);
+        console.log(`🤖 [Turno ${recursionCount}] Consultando Gemini (Modo: ${mode})...`);
 
         // 2. Invoke Edge Function
         console.log(`📤 Enviando Payload: MsgLen=${currentMessage.length}, ContextLen=${currentDocContext?.length || 0}`);
@@ -122,7 +123,8 @@ export class GeminiService {
           body: {
             message: currentMessage,
             docContext: currentDocContext,
-            history: this.history
+            history: this.history,
+            mode: mode // Send mode to Edge Function
           }
         });
 
@@ -183,7 +185,7 @@ export class GeminiService {
               });
               this.addToolResponse('reorderSections', { status: 'success', count: call.args.sections?.length || 0 });
             }
-                          else if (call.name === 'scanAndPatch') {
+            else if (call.name === 'scanAndPatch') {
               // SCAN→PATCH: Estrategia para documentos grandes
               const patches = call.args.patches || [];
               for (const patch of patches) {

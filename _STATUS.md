@@ -1,8 +1,10 @@
 # 🚀 ANTIGRAVITY STATUS (Memoria RAM)
 
-> **Última Actualización:** 2026-01-16 22:09
+> **Última Actualización:** 2026-01-18 23:51
 > **Puerto Activo:** 8081
+> **Despliegue:** [luxscaler-v2-prod.netlify.app](https://luxscaler-v2-prod.netlify.app)
 > **Estado:** OPERATIVO
+> **Puertos Externos:** z.ai (3000), manus (3005)
 
 ---
 
@@ -18,11 +20,8 @@
 3. Edge Function `lux-chat` desplegada con herramientas atómicas
 4. Nuevas herramientas: `upsertSection`, `reorderSections`
 
-## 🔧 PENDIENTES
-
-- [ ] Aplicar migración `20260116220000_document_sections.sql` via Dashboard Supabase
-- [ ] Probar herramientas atómicas en LuxCanvas
-- [ ] Verificar estabilidad del chat (error 400 roles corregido)
+- [x] Simulador V2.4 Avanzado: Motor & Previews Configurable
+- [x] Integrar resultados reales del motor (AI Processing Simulation)
 
 ## ⚠️ ÚLTIMO ERROR CONOCIDO
 
